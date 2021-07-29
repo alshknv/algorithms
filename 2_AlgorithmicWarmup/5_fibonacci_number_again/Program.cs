@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace _5_fibonacci_number_again
 {
-    class FibonacciHuge
+    public class FibonacciModulo
     {
         private static List<int> GetPisanoPeriod(int m)
         {
@@ -26,12 +26,16 @@ namespace _5_fibonacci_number_again
             return pisano[(int)(n % pisano.Count)];
         }
 
+        public static string Calc(string input)
+        {
+            var numbers = input.Split(' ');
+            return GetFibMod(long.Parse(numbers[0]), int.Parse(numbers[1])).ToString();
+        }
+
         static void Main(string[] args)
         {
             var input = Console.ReadLine();
-            var numbers = input.Split(' ');
-            var fibMod = GetFibMod(long.Parse(numbers[0]), int.Parse(numbers[1]));
-            Console.WriteLine(fibMod);
+            Console.WriteLine(Calc(input));
         }
     }
 }

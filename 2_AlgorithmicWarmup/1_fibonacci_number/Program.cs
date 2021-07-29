@@ -4,14 +4,14 @@ namespace _1_fibonacci_number
 {
     public class Fibonacci
     {
-        private static ulong calcFib(int n)
+        private static ulong CalcFib(uint n)
         {
             if (n <= 1)
                 return (ulong)n;
 
             ulong prevNum1 = 0, prevNum2 = 1;
 
-            for (int i = 2; i < n; i++)
+            for (uint i = 2; i < n; i++)
             {
                 var tmpPrev1 = prevNum1;
                 prevNum1 = prevNum2;
@@ -21,10 +21,16 @@ namespace _1_fibonacci_number
             return prevNum1 + prevNum2;
         }
 
+        public static string Calc(string line)
+        {
+            var n = uint.Parse(line);
+            return CalcFib(n).ToString();
+        }
+
         public static void Main(string[] args)
         {
-            var n = int.Parse(Console.ReadLine());
-            Console.WriteLine(calcFib(n));
+            var line = Console.ReadLine();
+            Console.WriteLine(Calc(line));
         }
     }
 }

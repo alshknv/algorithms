@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>_8_last_digit_of_the_sum_of_squares_of_fibonacci_numbers</RootNamespace>
+  </PropertyGroup>
+
+</Project>

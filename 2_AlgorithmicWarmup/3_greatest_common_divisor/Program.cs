@@ -16,10 +16,16 @@ namespace _3_greatest_common_divisor
             return a;
         }
 
+        public static string Calc(string input)
+        {
+            var numbers = input.Split(' ');
+            return getGCD(uint.Parse(numbers[0]), uint.Parse(numbers[1])).ToString();
+        }
+
         public static void Main(string[] args)
         {
-            var numbers = Console.ReadLine().Split(' ');
-            Console.WriteLine(getGCD(uint.Parse(numbers[0]), uint.Parse(numbers[1])));
+            var input = Console.ReadLine();
+            Console.WriteLine(Calc(input));
         }
     }
 }

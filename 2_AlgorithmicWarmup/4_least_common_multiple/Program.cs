@@ -4,7 +4,7 @@ namespace _4_least_common_multiple
 {
     public class LCM
     {
-        private static uint getGCD(uint a, uint b)
+        private static uint GetGCD(uint a, uint b)
         {
             uint mod;
             do
@@ -16,15 +16,21 @@ namespace _4_least_common_multiple
             return a;
         }
 
-        private static ulong getLCM(uint a, uint b)
+        private static ulong GetLCM(uint a, uint b)
         {
-            return (ulong)a * b / getGCD(a, b);
+            return (ulong)a * b / GetGCD(a, b);
+        }
+
+        public static string Calc(string input)
+        {
+            var numbers = input.Split(' ');
+            return GetLCM(uint.Parse(numbers[0]), uint.Parse(numbers[1])).ToString();
         }
 
         public static void Main(string[] args)
         {
-            var numbers = Console.ReadLine().Split(' ');
-            Console.WriteLine(getLCM(uint.Parse(numbers[0]), uint.Parse(numbers[1])));
+            var input = Console.ReadLine();
+            Console.WriteLine(Calc(input));
         }
     }
 }

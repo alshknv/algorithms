@@ -2,35 +2,41 @@
 
 namespace _6_last_digit_of_the_sum_of_fibonacci_numbers
 {
-    class Program
+    public class LastDigitOfSum
     {
-        private static ulong calcFib(ulong n)
+        private static int GetFibonacciLastDigit(ulong n)
         {
             if (n <= 1)
-                return (ulong)n;
+                return (int)n;
 
-            ulong prevNum1 = 0, prevNum2 = 1;
+            int prevDigit = 0, currentDigit = 1;
 
-            for (ulong i = 2; i < n; i++)
+            for (int i = 2; i <= (int)(n % 60); ++i)
             {
-                var tmpPrev1 = prevNum1;
-                prevNum1 = prevNum2;
-                prevNum2 += tmpPrev1;
+                int tmpPrevDigit = prevDigit;
+                prevDigit = currentDigit;
+                currentDigit = (tmpPrevDigit + currentDigit) % 10;
             }
 
-            return prevNum1 + prevNum2;
+            return currentDigit;
         }
 
-        private static ulong getLastDigitOfSum(ulong n)
+        private static int GetLastDigitOfSum(ulong n)
         {
-            var fibn2 = calcFib(n + 2) - 1;
-            return fibn2 % 10;
+            var fibn2 = GetFibonacciLastDigit(n + 2) - 1;
+            return fibn2 >= 0 ? fibn2 : fibn2 + 10;
         }
+
+        public static string Calc(string input)
+        {
+            var number = ulong.Parse(input);
+            return GetLastDigitOfSum(number).ToString();
+        }
+
         static void Main(string[] args)
         {
-            var number = ulong.Parse(Console.ReadLine());
-            var digit = getLastDigitOfSum(number);
-            Console.WriteLine(digit);
+            var input = Console.ReadLine();
+            Console.WriteLine(Calc(input));
         }
     }
 }

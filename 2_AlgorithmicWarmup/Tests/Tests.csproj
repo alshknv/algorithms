@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
+    <PackageReference Include="xunit" Version="2.4.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
+    <PackageReference Include="coverlet.collector" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\3_greatest_common_divisor\3_greatest_common_divisor.csproj" />
+    <ProjectReference Include="..\8_last_digit_of_the_sum_of_squares_of_fibonacci_numbers\8_last_digit_of_the_sum_of_squares_of_fibonacci_numbers.csproj" />
+    <ProjectReference Include="..\6_last_digit_of_the_sum_of_fibonacci_numbers\6_last_digit_of_the_sum_of_fibonacci_numbers.csproj" />
+    <ProjectReference Include="..\1_fibonacci_number\1_fibonacci_number.csproj" />
+    <ProjectReference Include="..\7_last_digit_of_the_sum_of_fibonacci_numbers_again\7_last_digit_of_the_sum_of_fibonacci_numbers_again.csproj" />
+    <ProjectReference Include="..\2_last_digit_of_fibonacci_number\2_last_digit_of_fibonacci_number.csproj" />
+    <ProjectReference Include="..\5_fibonacci_number_again\5_fibonacci_number_again.csproj" />
+    <ProjectReference Include="..\4_least_common_multiple\4_least_common_multiple.csproj" />
+  </ItemGroup>
+
+</Project>
