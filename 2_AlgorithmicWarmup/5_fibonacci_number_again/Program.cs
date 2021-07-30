@@ -13,9 +13,9 @@ namespace _5_fibonacci_number_again
             };
             do
             {
-                var next = (result[^2] + result[^1]) % m;
+                var next = (result[result.Count - 2] + result[result.Count - 1]) % m;
                 result.Add(next);
-            } while (result[^2] != 0 || result[^1] != 1);
+            } while (result[result.Count - 2] != 0 || result[result.Count - 1] != 1);
             result.RemoveRange(result.Count - 2, 2);
             return result;
         }

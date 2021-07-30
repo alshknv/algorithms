@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace _1_fibonacci_number
+namespace fibonacci_number
 {
     public class Fibonacci
     {

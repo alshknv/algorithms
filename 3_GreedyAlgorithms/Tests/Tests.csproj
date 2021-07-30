@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
+    <PackageReference Include="xunit" Version="2.4.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
+    <PackageReference Include="coverlet.collector" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\4_maximum_advertisement_revenue\4_maximum_advertisement_revenue.csproj" />
+    <ProjectReference Include="..\3_car_fueling\3_car_fueling.csproj" />
+    <ProjectReference Include="..\6_maximum_number_of_prizes\6_maximum_number_of_prizes.csproj" />
+    <ProjectReference Include="..\1_money_change\1_money_change.csproj" />
+    <ProjectReference Include="..\5_collecting_signatures\5_collecting_signatures.csproj" />
+    <ProjectReference Include="..\2_maximum_value_of_the_loot\2_maximum_value_of_the_loot.csproj" />
+    <ProjectReference Include="..\7_maximum_salary\7_maximum_salary.csproj" />
+  </ItemGroup>
+
+</Project>

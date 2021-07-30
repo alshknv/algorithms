@@ -7,21 +7,21 @@ namespace Tests
     public class _6_LastDigitOfFibonacciSum_Tests
     {
         [Fact]
-        public void _1_LastDigitOfSum_Limit()
+        public void LastDigitOfSum_Limit()
         {
             var result = LastDigitOfSum.Calc($"{Math.Pow(10, 14)}");
             Assert.Equal("5", result);
         }
 
         [Fact]
-        public void _1_LastDigitOfSum_1()
+        public void LastDigitOfSum_1()
         {
             var result = LastDigitOfSum.Calc("3");
             Assert.Equal("4", result);
         }
 
         [Fact]
-        public void _1_LastDigitOfSum_2()
+        public void LastDigitOfSum_2()
         {
             var result = LastDigitOfSum.Calc("100");
             Assert.Equal("5", result);

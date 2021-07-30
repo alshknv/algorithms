@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <RootNamespace>fibonacci_number</RootNamespace>
+    <RootNamespace>_2_maximum_value_of_the_loot</RootNamespace>
   </PropertyGroup>
 
 </Project>

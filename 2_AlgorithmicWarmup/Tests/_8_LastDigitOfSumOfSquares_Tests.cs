@@ -7,30 +7,37 @@ namespace Tests
     public class _8_LastDigitOfSumOfSquares_Tests
     {
         [Fact]
-        public void _1_LastDigitOfSumOfSquares_Limit()
+        public void LastDigitOfSumOfSquares_Limit()
         {
             var result = LastDigitOfSumOfSquares.Calc($"{Math.Pow(10, 14)}");
             Assert.Equal("5", result);
         }
 
         [Fact]
-        public void _1_LastDigitOfSumOfSquares_1()
+        public void LastDigitOfSumOfSquares_1()
         {
             var result = LastDigitOfSumOfSquares.Calc("7");
             Assert.Equal("3", result);
         }
 
         [Fact]
-        public void _1_LastDigitOfSumOfSquares_2()
+        public void LastDigitOfSumOfSquares_2()
         {
             var result = LastDigitOfSumOfSquares.Calc("73");
             Assert.Equal("1", result);
         }
 
         [Fact]
-        public void _1_LastDigitOfSumOfSquares_3()
+        public void LastDigitOfSumOfSquares_3()
         {
             var result = LastDigitOfSumOfSquares.Calc("1234567890");
+            Assert.Equal("0", result);
+        }
+
+        [Fact]
+        public void LastDigitOfSumOfSquares_4()
+        {
+            var result = LastDigitOfSumOfSquares.Calc("239");
             Assert.Equal("0", result);
         }
     }

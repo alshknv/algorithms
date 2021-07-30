@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <RootNamespace>fibonacci_number</RootNamespace>
+    <RootNamespace>_6_maximum_number_of_prizes</RootNamespace>
   </PropertyGroup>
 
 </Project>

@@ -6,12 +6,13 @@ namespace _2_last_digit_of_fibonacci_number
     {
         private static int GetFibonacciLastDigit(uint n)
         {
-            if (n <= 1)
-                return (int)n;
+            int fmod = (int)(n % 60);
+            if (fmod <= 1)
+                return (int)fmod;
 
             int prevDigit = 0, currentDigit = 1;
 
-            for (int i = 2; i <= (int)(n % 60); ++i)
+            for (int i = 2; i <= fmod; ++i)
             {
                 int tmpPrevDigit = prevDigit;
                 prevDigit = currentDigit;
