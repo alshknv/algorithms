@@ -5,5 +5,8 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>_4_maximum_advertisement_revenue</RootNamespace>
   </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>6</LangVersion>
+  </PropertyGroup>
 
 </Project>

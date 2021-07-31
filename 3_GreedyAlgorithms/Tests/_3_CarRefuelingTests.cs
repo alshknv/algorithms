@@ -39,5 +39,16 @@ namespace Tests
                 "100 150"
             }));
         }
+
+        [Fact]
+        public void Test4()
+        {
+            Assert.Equal("2", CarFueling.Solve(new List<string>() {
+                "500",
+                "200",
+                "4",
+                "100 200 300 400"
+            }));
+        }
     }
 }

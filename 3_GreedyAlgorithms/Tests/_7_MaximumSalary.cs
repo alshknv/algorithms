@@ -23,5 +23,11 @@ namespace Tests
         {
             Assert.Equal("923923", MaximumSalary.Solve("23 39 92"));
         }
+
+        [Fact]
+        public void Test4()
+        {
+            Assert.Equal("992232", MaximumSalary.Solve("9 2 92 23"));
+        }
     }
 }

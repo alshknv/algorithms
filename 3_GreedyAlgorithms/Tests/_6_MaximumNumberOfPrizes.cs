@@ -29,5 +29,11 @@ namespace Tests
             l1 => Assert.Equal("1", l1),
             l2 => Assert.Equal("2", l2));
         }
+
+        [Fact]
+        public void Test4()
+        {
+            MaximumNumberOfPrizes.Solve("200000000");
+        }
     }
 }

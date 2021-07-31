@@ -23,7 +23,14 @@ namespace _2_maximum_value_of_the_loot
                 int space2fill = Math.Min(item.Weight, capacity);
                 value += item.ValuePerWeight * space2fill;
                 capacity -= space2fill;
-                i++;
+                if (space2fill == item.Weight)
+                {
+                    items.Remove(item);
+                }
+                else
+                {
+                    i++;
+                }
             }
             return value;
         }
