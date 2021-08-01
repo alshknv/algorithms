@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
+    <PackageReference Include="xunit" Version="2.4.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
+    <PackageReference Include="coverlet.collector" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\6_closest_points\6_closest_points.csproj" />
+    <ProjectReference Include="..\3_improving_quicksort\3_improving_quicksort.csproj" />
+    <ProjectReference Include="..\4_number_of_inversions\4_number_of_inversions.csproj" />
+    <ProjectReference Include="..\1_binary_search\1_binary_search.csproj" />
+    <ProjectReference Include="..\2_majority_element\2_majority_element.csproj" />
+    <ProjectReference Include="..\5_organizing_a_lottery\5_organizing_a_lottery.csproj" />
+  </ItemGroup>
+
+</Project>
