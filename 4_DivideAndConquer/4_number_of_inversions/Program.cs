@@ -6,52 +6,54 @@ namespace _4_number_of_inversions
 {
     public static class NumberOfInversions
     {
-        private class InversionCounter : List<long>
+        private class InversionCounter
         {
+            public long[] Array;
             public int InversionCount = 0;
         }
 
         private static InversionCounter Merge(InversionCounter left, InversionCounter right)
         {
-            var mergedList = new InversionCounter()
+            var merged = new InversionCounter()
             {
+                Array = new long[left.Array.Length + right.Array.Length],
                 InversionCount = left.InversionCount + right.InversionCount
             };
-            var fromRight = 0;
-            while (left.Count > 0 && right.Count > 0)
+
+            var idx1 = 0; var idx2 = 0;
+            while (idx1 < left.Array.Length && idx2 < right.Array.Length)
             {
-                if (left[0] <= right[0])
+                if (left.Array[idx1] <= right.Array[idx2])
                 {
-                    mergedList.Add(left[0]);
-                    left.RemoveAt(0);
-                    mergedList.InversionCount += fromRight;
+                    merged.Array[idx1 + idx2] = left.Array[idx1++];
                 }
                 else
                 {
-                    fromRight++;
-                    mergedList.Add(right[0]);
-                    right.RemoveAt(0);
+                    merged.InversionCount += left.Array.Length - idx1;
+                    merged.Array[idx1 + idx2] = right.Array[idx2++];
                 }
             }
-            if (left.Count > 0)
+            if (idx1 < left.Array.Length)
             {
-                mergedList.AddRange(left);
-                mergedList.InversionCount += left.Count;
+                for (int i = idx1; i < left.Array.Length; i++)
+                    merged.Array[i + idx2] = left.Array[i];
             }
-            else if (right.Count > 0)
+            else if (idx2 < right.Array.Length)
             {
-                mergedList.AddRange(right);
+                for (int i = idx2; i < right.Array.Length; i++)
+                    merged.Array[idx1 + i] = right.Array[i];
             }
-            return mergedList;
+            return merged;
         }
 
         private static InversionCounter CountInversions(long[] array)
         {
             if (array.Length == 1)
             {
-                return new InversionCounter() {
-                     array[0]
-                 };
+                return new InversionCounter
+                {
+                    Array = new long[1] { array[0] }
+                };
             }
             else
             {
@@ -60,6 +62,20 @@ namespace _4_number_of_inversions
                 var right = CountInversions(array.Skip(mid).ToArray());
                 return Merge(left, right);
             }
+        }
+
+        public static string Naive(string input)
+        {
+            var array = input.Split(' ').Select(x => long.Parse(x)).ToArray();
+            var count = 0;
+            for (int i = 0; i < array.Length; i++)
+            {
+                for (int j = i + 1; j < array.Length; j++)
+                {
+                    if (array[j] < array[i]) count++;
+                }
+            }
+            return count.ToString();
         }
 
         public static string Solve(string input)

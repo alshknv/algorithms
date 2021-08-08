@@ -6,72 +6,67 @@ namespace _2_majority_element
 {
     public static class MajorityElement
     {
-        private class ElementCountInfo
+        private static long[] Merge(long[] left, long[] right)
         {
-            public long Value;
-            public long Count;
-            public ElementCountInfo(long value, long count)
+            var mergedArray = new long[left.Length + right.Length];
+            var idx1 = 0; var idx2 = 0;
+            while (idx1 < left.Length && idx2 < right.Length)
             {
-                Value = value; Count = count;
-            }
-        }
-
-        private static List<ElementCountInfo> Merge(List<ElementCountInfo> left, List<ElementCountInfo> right)
-        {
-            var mergedList = new List<ElementCountInfo>();
-            while (left.Count > 0 && right.Count > 0)
-            {
-                if (left[0].Value == right[0].Value)
+                if (left[idx1] < right[idx2])
                 {
-                    mergedList.Add(new ElementCountInfo(left[0].Value, left[0].Count + right[0].Count));
-                    left.RemoveAt(0);
-                    right.RemoveAt(0);
-                }
-                else if (left[0].Value > right[0].Value)
-                {
-                    mergedList.Add(left[0]);
-                    left.RemoveAt(0);
+                    mergedArray[idx1 + idx2] = left[idx1++];
                 }
                 else
                 {
-                    mergedList.Add(right[0]);
-                    right.RemoveAt(0);
+                    mergedArray[idx1 + idx2] = right[idx2++];
                 }
             }
-            if (left.Count > 0)
+            if (idx1 < left.Length)
             {
-                mergedList.AddRange(left);
+                for (int i = idx1; i < left.Length; i++)
+                    mergedArray[i + idx2] = left[i];
             }
-            else if (right.Count > 0)
+            else if (idx2 < right.Length)
             {
-                mergedList.AddRange(right);
+                for (int i = idx2; i < right.Length; i++)
+                    mergedArray[idx1 + i] = right[i];
             }
-            return mergedList;
+            return mergedArray;
         }
 
-        private static List<ElementCountInfo> DivideAndCount(long[] array)
+        private static long[] MergeSort(long[] array)
         {
             if (array.Length == 1)
             {
-                return new List<ElementCountInfo>() {
-                    new ElementCountInfo(array[0], 1)
-                };
+                return new long[1] { array[0] };
             }
             else
             {
                 var mid = array.Length / 2;
-                var left = DivideAndCount(array.Take(mid).ToArray());
-                var right = DivideAndCount(array.Skip(mid).ToArray());
+                var left = MergeSort(array.Take(mid).ToArray());
+                var right = MergeSort(array.Skip(mid).ToArray());
                 return Merge(left, right);
             }
         }
 
         private static string HasMajority(string[] array)
         {
-            var countResult = DivideAndCount(array.Select(x => long.Parse(x)).ToArray());
-            for (int i = 0; i < countResult.Count; i++)
+            var sortedArray = MergeSort(array.Select(x => long.Parse(x)).ToArray());
+            if (sortedArray.Length < 2) return "1";
+            var count = 1;
+            var currentValue = sortedArray[0];
+            for (int i = 1; i < sortedArray.Length; i++)
             {
-                if (countResult[i].Count > array.Length / 2) return "1";
+                if (sortedArray[i] == currentValue)
+                {
+                    count++;
+                }
+                else
+                {
+                    count = 1;
+                    currentValue = sortedArray[i];
+                }
+                if (count > sortedArray.Length / 2) return "1";
             }
             return "0";
         }
