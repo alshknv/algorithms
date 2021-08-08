@@ -13,4 +13,12 @@
     <PackageReference Include="coverlet.collector" Version="1.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\3_edit_distance\3_edit_distance.csproj" />
+    <ProjectReference Include="..\5_longest_common_subsequence_of_three_sequences\5_longest_common_subsequence_of_three_sequences.csproj" />
+    <ProjectReference Include="..\2_primitive_calculator\2_primitive_calculator.csproj" />
+    <ProjectReference Include="..\1_money_change_again\1_money_change_again.csproj" />
+    <ProjectReference Include="..\4_longest_common_subsequence_of_two_sequences\4_longest_common_subsequence_of_two_sequences.csproj" />
+  </ItemGroup>
+
 </Project>
