@@ -7,7 +7,7 @@ namespace _2_primitive_calculator
     {
         public enum OperationType { Plus1, MultBy2, MultBy3, None };
 
-        private static int GetPreviousIdx(int currentNum, OperationType type)
+        private static int GetPreviousNum(int currentNum, OperationType type)
         {
             switch (type)
             {
@@ -17,21 +17,6 @@ namespace _2_primitive_calculator
                     return currentNum % 2 == 0 ? currentNum / 2 : -1;
                 case OperationType.MultBy3:
                     return currentNum % 3 == 0 ? currentNum / 3 : -1;
-                default:
-                    return currentNum;
-            }
-        }
-
-        private static int GetNextNumber(int currentNum, OperationType type)
-        {
-            switch (type)
-            {
-                case OperationType.Plus1:
-                    return currentNum + 1;
-                case OperationType.MultBy2:
-                    return currentNum * 2;
-                case OperationType.MultBy3:
-                    return currentNum * 3;
                 default:
                     return currentNum;
             }
@@ -55,12 +40,12 @@ namespace _2_primitive_calculator
                 var curNumber = "";
                 for (var oper = OperationType.Plus1; oper <= OperationType.MultBy3; oper++)
                 {
-                    var idx = GetPreviousIdx(n, oper);
+                    var prev = GetPreviousNum(n, oper);
 
-                    if (idx >= 0 && operChain[idx] + 1 < minOpers)
+                    if (prev >= 0 && operChain[prev] + 1 < minOpers)
                     {
-                        minOpers = operChain[idx] + 1;
-                        curNumber = $"{numChain[idx]} {n}";
+                        minOpers = operChain[prev] + 1;
+                        curNumber = $"{numChain[prev]} {n}";
                     }
                 }
                 operChain[n] = minOpers;
