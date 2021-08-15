@@ -4,19 +4,19 @@ namespace _3_maximum_value_of_an_arithmetic_expression
 {
     public static class MaximumValueOfArithmeticExpression
     {
-        private static int Min(params int[] values)
+        private static long Min(params long[] values)
         {
             Array.Sort(values);
             return values[0];
         }
 
-        private static int Max(params int[] values)
+        private static long Max(params long[] values)
         {
             Array.Sort(values, (v1, v2) => -v1.CompareTo(v2));
             return values[0];
         }
 
-        private static int Oper(int a, int b, char oper)
+        private static long Oper(long a, long b, char oper)
         {
             switch (oper)
             {
@@ -26,9 +26,9 @@ namespace _3_maximum_value_of_an_arithmetic_expression
             }
         }
 
-        private static int[] MinMax(int[,] min, int[,] max, char[] opers, int i, int j)
+        private static long[] MinMax(long[,] min, long[,] max, char[] opers, int i, int j)
         {
-            var result = new int[2] { int.MaxValue, int.MinValue };
+            var result = new long[2] { int.MaxValue, int.MinValue };
             for (int k = i; k <= j - 1; k++)
             {
                 var a = Oper(max[i, k], max[k + 1, j], opers[k]);
@@ -41,11 +41,11 @@ namespace _3_maximum_value_of_an_arithmetic_expression
             return result;
         }
 
-        private static int MaxParenthesis(int[] digits, char[] opers)
+        private static long MaxParenthesis(int[] digits, char[] opers)
         {
             var n = digits.Length;
-            var min = new int[n, n];
-            var max = new int[n, n];
+            var min = new long[n, n];
+            var max = new long[n, n];
 
             for (int s = 0; s < n; s++)
             {
