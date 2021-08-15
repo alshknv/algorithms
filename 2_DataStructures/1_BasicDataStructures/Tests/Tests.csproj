@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
+    <PackageReference Include="xunit" Version="2.4.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
+    <PackageReference Include="coverlet.collector" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\4_stack_with_max\4_stack_with_max.csproj" />
+    <ProjectReference Include="..\1_brackets_in_code\1_brackets_in_code.csproj" />
+    <ProjectReference Include="..\3_network_simulation\3_network_simulation.csproj" />
+    <ProjectReference Include="..\2_tree_height\2_tree_height.csproj" />
+    <ProjectReference Include="..\5_max_sliding_window\5_max_sliding_window.csproj" />
+  </ItemGroup>
+
+</Project>
