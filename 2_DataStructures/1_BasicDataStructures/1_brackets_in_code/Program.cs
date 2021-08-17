@@ -4,23 +4,67 @@ using System.Linq;
 
 namespace _1_brackets_in_code
 {
-    public static class BracketsInCode
+    public class Bracket
     {
-        private class Bracket
-        {
-            public char Symbol;
-            public int Index;
+        public char Symbol;
+        public int Index;
+        public Bracket Next;
 
-            public Bracket(char symbol, int index)
-            {
-                Symbol = symbol;
-                Index = index;
-            }
+        public static Bracket Create(Bracket bracket = null)
+        {
+            return bracket == null ? null :
+            new Bracket(bracket.Symbol, bracket.Index, bracket.Next);
         }
 
+        public Bracket(char symbol, int index, Bracket next = null)
+        {
+            Symbol = symbol;
+            Index = index;
+            Next = next;
+        }
+    }
+
+    public class StackItem<T>
+    {
+        public StackItem<T> Next;
+        public T Item;
+    }
+
+    public class MyStack<T>
+    {
+        private StackItem<T> top;
+        public void Push(T item)
+        {
+            top = new StackItem<T>()
+            {
+                Item = item,
+                Next = top
+            };
+        }
+
+        public T Pop()
+        {
+            var pop = top.Item;
+            top = top.Next;
+            return pop;
+        }
+
+        public T Top()
+        {
+            return top.Item;
+        }
+
+        public bool Empty()
+        {
+            return top == null;
+        }
+    }
+
+    public static class BracketsInCode
+    {
         public static string Solve(string input)
         {
-            var bracketStack = new Stack<Bracket>();
+            var bracketStack = new MyStack<Bracket>();
             var openBrackets = new char[3] { '(', '[', '{' };
             var bracketMatch = new Dictionary<char, char>() { { ')', '(' }, { ']', '[' }, { '}', '{' } };
             for (int i = 0; i < input.Length; i++)
@@ -31,10 +75,9 @@ namespace _1_brackets_in_code
                 }
                 else
                 {
-                    Bracket lastBracket;
                     if (bracketMatch.ContainsKey(input[i]))
                     {
-                        if (bracketStack.TryPeek(out lastBracket) && lastBracket.Symbol == bracketMatch[input[i]])
+                        if (!bracketStack.Empty() && bracketStack.Top().Symbol == bracketMatch[input[i]])
                         {
                             bracketStack.Pop();
                         }
@@ -45,7 +88,7 @@ namespace _1_brackets_in_code
                     }
                 }
             }
-            if (bracketStack.Count > 0)
+            if (!bracketStack.Empty())
             {
                 return (bracketStack.Pop().Index + 1).ToString();
             }
