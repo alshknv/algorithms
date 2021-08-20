@@ -17,12 +17,86 @@ namespace _3_network_simulation
         }
     }
 
+    public class QueueItem<T>
+    {
+        public QueueItem<T> Next;
+        public QueueItem<T> Prev;
+        public T Item;
+    }
+
+    public class MyQueue<T>
+    {
+        private QueueItem<T> begin;
+        private QueueItem<T> end;
+
+        private int count = 0;
+
+        public int Count
+        {
+            get { return count; }
+        }
+
+        public void Enqueue(T item)
+        {
+            var newEnd = new QueueItem<T>()
+            {
+                Item = item
+            };
+            if (end == null)
+            {
+                end = begin = newEnd;
+            }
+            else
+            {
+                newEnd.Prev = new QueueItem<T>()
+                {
+                    Item = end.Item,
+                    Next = newEnd,
+                    Prev = end
+                };
+                if (begin.Equals(end)) begin = newEnd.Prev;
+                end.Next = newEnd;
+                end = newEnd;
+            }
+            count++;
+        }
+
+        public bool TryPeek(out T item)
+        {
+
+            if (Empty())
+            {
+                item = default(T);
+                return false;
+            }
+            else
+            {
+                item = begin.Item;
+                return true;
+            }
+        }
+
+        public T Dequeue()
+        {
+            var item = begin.Item;
+            begin = begin.Next;
+            if (begin == null) end = null;
+            count--;
+            return item;
+        }
+
+        public bool Empty()
+        {
+            return begin == null;
+        }
+    }
+
     public static class NetworkSimulation
     {
         public static string[] Solve(string line1, string[] data)
         {
             var bufSize = int.Parse(line1.Split(' ')[0]);
-            var queue = new Queue<Packet>();
+            var queue = new MyQueue<Packet>();
             var packets = data.Select((x, i) =>
             {
                 var d = x.Split(' ');
@@ -32,10 +106,15 @@ namespace _3_network_simulation
             long beginProcess = 0;
             for (int i = 0; i < packets.Length; i++)
             {
+                if (i == 0) beginProcess = packets[i].Arrival;
                 Packet packet;
                 if (queue.TryPeek(out packet) && beginProcess + packet.ProcessTime <= packets[i].Arrival)
                 {
                     packet = queue.Dequeue();
+                    if (packet.Arrival > beginProcess)
+                    {
+                        beginProcess = packet.Arrival;
+                    }
                     result[packet.Index] = beginProcess.ToString();
                     beginProcess += packet.ProcessTime;
                 }
@@ -51,6 +130,10 @@ namespace _3_network_simulation
             while (queue.Count > 0)
             {
                 var packet = queue.Dequeue();
+                if (packet.Arrival > beginProcess)
+                {
+                    beginProcess = packet.Arrival;
+                }
                 result[packet.Index] = beginProcess.ToString();
                 beginProcess += packet.ProcessTime;
             }
@@ -66,7 +149,10 @@ namespace _3_network_simulation
             {
                 data[i] = Console.ReadLine();
             }
-            Console.WriteLine(Solve(line1, data));
+            foreach (var line in Solve(line1, data))
+            {
+                Console.WriteLine(line);
+            }
         }
     }
 }

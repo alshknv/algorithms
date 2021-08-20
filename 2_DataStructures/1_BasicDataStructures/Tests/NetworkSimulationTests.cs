@@ -17,6 +17,11 @@ namespace Tests
             Assert.Collection(NetworkSimulation.Solve("1 2", new string[2] { "0 1", "1 1" }),
                 l1 => Assert.Equal("0", l1),
                 l2 => Assert.Equal("1", l2));
+            Assert.Collection(NetworkSimulation.Solve("1 1", new string[1] { "1 0" }),
+                l1 => Assert.Equal("1", l1));
+            Assert.Collection(NetworkSimulation.Solve("1 2", new string[2] { "0 1", "2 1" }),
+                l1 => Assert.Equal("0", l1),
+                l2 => Assert.Equal("2", l2));
         }
 
         [Fact]
