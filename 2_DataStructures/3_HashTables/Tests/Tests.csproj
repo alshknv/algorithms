@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
+    <PackageReference Include="xunit" Version="2.4.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
+    <PackageReference Include="coverlet.collector" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\5_longest_common_substring\5_longest_common_substring.csproj" />
+    <ProjectReference Include="..\1_phone_book\1_phone_book.csproj" />
+    <ProjectReference Include="..\6_matching_with_mismatches\6_matching_with_mismatches.csproj" />
+    <ProjectReference Include="..\2_hash_chains\2_hash_chains.csproj" />
+    <ProjectReference Include="..\4_substring_equality\4_substring_equality.csproj" />
+    <ProjectReference Include="..\3_hash_substring\3_hash_substring.csproj" />
+  </ItemGroup>
+
+</Project>
