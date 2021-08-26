@@ -66,12 +66,12 @@ namespace _1_phone_book
             hashB = newHashB;
         }
 
-        private int Hash(int value, int p, int a, int b, int m)
+        private long Hash(long value, int p, int a, int b, int m)
         {
-            return (int)(((long)value * a + b) % p % m);
+            return (value * a + b) % p % m;
         }
 
-        private int Hash(int value)
+        private long Hash(int value)
         {
             return Hash(value, prime, hashA, hashB, table.Length);
         }

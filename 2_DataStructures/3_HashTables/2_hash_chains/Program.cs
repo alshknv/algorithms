@@ -17,15 +17,9 @@ namespace _2_hash_chains
         {
             var stringBytes = Encoding.ASCII.GetBytes(value);
             long hash = 0;
-
-            for (int i = 0; i < stringBytes.Length; i++)
+            for (int i = stringBytes.Length - 1; i >= 0; i--)
             {
-                long pow = 1;
-                for (int j = 0; j < i; j++)
-                {
-                    pow = pow % prime * (x % prime);
-                }
-                hash = (hash % prime + stringBytes[i] * pow % prime) % prime;
+                hash = (hash * x + stringBytes[i]) % prime;
             }
             return (int)hash % buckets;
         }
