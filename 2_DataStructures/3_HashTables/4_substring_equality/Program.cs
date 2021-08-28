@@ -32,13 +32,12 @@ namespace _4_substring_equality
             var result = new string[queries.Length];
             for (int i = 0; i < queries.Length; i++)
             {
-                var qParams = queries[i].Split(' ').Select(x => int.Parse(x)).ToArray();
-                result[i] =
-                    (h1[qParams[0] + qParams[2]] % p1 - xn1[qParams[2]] * h1[qParams[0]]) % p1 ==
-                    (h1[qParams[1] + qParams[2]] % p1 - xn1[qParams[2]] * h1[qParams[1]]) % p1 &&
-                    (h2[qParams[0] + qParams[2]] % p2 - xn2[qParams[2]] * h2[qParams[0]]) % p2 ==
-                    (h2[qParams[1] + qParams[2]] % p2 - xn2[qParams[2]] * h2[qParams[1]]) % p2
-                ? "Yes" : "No";
+                var qParams = queries[i].Split(' ').Select(q => int.Parse(q)).ToArray();
+                var h1p1 = (h1[qParams[0] + qParams[2]] - xn1[qParams[2]] * h1[qParams[0]] + p1) % p1;
+                var h2p1 = (h1[qParams[1] + qParams[2]] - xn1[qParams[2]] * h1[qParams[1]] + p1) % p1;
+                var h1p2 = (h2[qParams[0] + qParams[2]] - xn2[qParams[2]] * h2[qParams[0]] + p2) % p2;
+                var h2p2 = (h2[qParams[1] + qParams[2]] - xn2[qParams[2]] * h2[qParams[1]] + p2) % p2;
+                result[i] = h1p1 == h2p1 && h1p2 == h2p2 ? "Yes" : "No";
             }
             return result;
         }

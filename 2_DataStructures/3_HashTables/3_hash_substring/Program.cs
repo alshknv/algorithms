@@ -17,14 +17,14 @@ namespace _3_hash_substring
             {
                 hash = (hash * x + bytes[i]) % prime;
             }
-            return (int)hash;
+            return hash;
         }
 
-        private static long NextHash(long prevHash, byte[] strBytes, int a, int b, int xp)
+        private static long NextHash(long prevHash, byte[] strBytes, int i, int pl, long xp)
         {
-            long xpn = (long)strBytes[a + b] * xp;
+            long xpn = strBytes[i + pl] * xp;
             long xh = x * prevHash;
-            return (xh + strBytes[a] - xpn) % prime;
+            return (xh + strBytes[i] - xpn + prime) % prime;
         }
 
         public static string Solve(string pattern, string str)
@@ -35,27 +35,24 @@ namespace _3_hash_substring
             // preprocessing
             var phashes = new long[strBytes.Length - pattern.Length + 1];
             phashes[strBytes.Length - pattern.Length] = Hash(strBytes.Skip(str.Length - pattern.Length).Take(pattern.Length).ToArray());
-            var xp = 1;
+            long xp = 1;
             for (int i = 0; i < pattern.Length; i++)
             {
-                xp = (int)((long)xp * x) % prime;
+                xp = (xp * x) % prime;
             }
-            for (int i = strBytes.Length - pattern.Length - 1; i >= 0; i--)
-            {
-                phashes[i] = NextHash(phashes[i + 1], strBytes, i, pattern.Length, xp);
-            }
-            // search
             var patternHash = Hash(pBytes);
-            for (int i = 0; i <= strBytes.Length - pBytes.Length; i++)
+            for (int i = strBytes.Length - pattern.Length; i >= 0; i--)
             {
+                if (i > 0)
+                {
+                    phashes[i - 1] = NextHash(phashes[i], strBytes, i - 1, pattern.Length, xp);
+                }
                 if (patternHash == phashes[i])
                 {
-                    if (str.Substring(i, pattern.Length).Equals(pattern))
-                    {
-                        result.Add(i);
-                    }
+                    result.Add(i);
                 }
             }
+            result.Reverse();
             return string.Join(" ", result);
         }
 
