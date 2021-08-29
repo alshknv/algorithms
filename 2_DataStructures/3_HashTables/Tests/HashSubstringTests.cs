@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Linq;
 using System.IO;
 using Xunit;
@@ -28,6 +29,32 @@ namespace Tests
                     Assert.Equal(answer, HashSubstring.Solve(lines[0], lines[1]));
                 }
             }
+        }
+
+        [Fact]
+        public void Runtime()
+        {
+            var text = "";
+            var pattern = "";
+            var p = "a";
+
+            for (int k = 0; k < 10; k++)
+            {
+                for (int i = 0; i < 100000; i++)
+                {
+                    text += p;
+                }
+                if (p == "a") p = "b"; else p = "a";
+            }
+            for (int i = 0; i < 3; i++)
+            {
+                pattern += "b";
+            }
+            var watch = new Stopwatch();
+            watch.Start();
+            HashSubstring.Solve(pattern, text);
+            watch.Stop();
+            Assert.True(watch.ElapsedMilliseconds < 1500);
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using Xunit;
 using _5_longest_common_substring;
 
@@ -49,6 +50,45 @@ namespace Tests
             l11 => Assert.Equal("9 3 3", l11),
             l12 => Assert.Equal("0 9 2", l12),
             l13 => Assert.Equal("7 2 5", l13));
+        }
+
+        [Fact]
+        public void Stress()
+        {
+            var rnd = new Random();
+            var len1 = rnd.Next(50) + 15;
+            var len2 = rnd.Next(50) + 15;
+            var count = 10;
+            var repetitions = 1000;
+            for (int r = 0; r < repetitions; r++)
+            {
+                var input = new string[count];
+                for (int c = 0; c < count; c++)
+                {
+                    var str = "";
+                    for (int i = 0; i < len1; i++)
+                    {
+                        str += rnd.Next(100) % 2 == 0 ? "a" : "b";
+                    }
+                    str += " ";
+                    for (int i = 0; i < len2; i++)
+                    {
+                        str += rnd.Next(100) % 2 == 0 ? "a" : "b";
+                    }
+                    input[c] = str;
+                }
+                LongestCommonSubstring.Solve(input);
+            }
+        }
+
+        [Fact]
+        public void Zero()
+        {
+            Assert.Collection(LongestCommonSubstring.Solve(new string[] {
+                "aaa ", " "
+            }),
+            l1 => Assert.Equal("0 0 0", l1),
+            l2 => Assert.Equal("0 0 0", l2));
         }
     }
 }
