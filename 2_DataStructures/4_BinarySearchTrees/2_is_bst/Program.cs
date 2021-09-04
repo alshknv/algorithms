@@ -10,7 +10,7 @@ namespace _2_is_bst
             public long Key;
             public Node Left;
             public Node Right;
-            public bool Calc;
+            public bool Ready;
             public bool? Correct;
             public long? MinChild;
             public long? MaxChild;
@@ -44,7 +44,7 @@ namespace _2_is_bst
             return tree.Length > 0 ? tree[0] : null;
         }
 
-        private static void Traverse(Node node)
+        private static void TraversePostOrder(Node node)
         {
             if (node == null) return;
             Stack<Node> nodeStack = new Stack<Node>();
@@ -52,9 +52,9 @@ namespace _2_is_bst
             while (nodeStack.Count > 0)
             {
                 var n = nodeStack.Pop();
-                if (!n.Calc)
+                if (!n.Ready)
                 {
-                    n.Calc = true;
+                    n.Ready = true;
                     nodeStack.Push(n);
                     if (n.Right != null) nodeStack.Push(n.Right);
                     if (n.Left != null) nodeStack.Push(n.Left);
@@ -81,7 +81,7 @@ namespace _2_is_bst
         public static string Solve(string[] vertices)
         {
             var tree = BuildTree(vertices);
-            Traverse(tree);
+            TraversePostOrder(tree);
             return (tree?.Correct ?? true) ? "CORRECT" : "INCORRECT";
         }
 
