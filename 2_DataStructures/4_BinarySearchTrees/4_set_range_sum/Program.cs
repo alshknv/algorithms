@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace _4_set_range_sum
 {
@@ -27,15 +28,17 @@ namespace _4_set_range_sum
                 {
                     // left zig
                     root.Left = N.Right;
+                    if (N.Right != null) N.Right.Parent = root;
                     N.Right = root;
                     root.Parent = N;
                     N.Parent = null;
                     root = N;
                 }
-                if (N.Parent == root && root.Right == N)
+                else if (N.Parent == root && root.Right == N)
                 {
                     // right zig
                     root.Right = N.Left;
+                    if (N.Left != null) N.Left.Parent = root;
                     N.Left = root;
                     root.Parent = N;
                     N.Parent = null;
@@ -49,8 +52,10 @@ namespace _4_set_range_sum
                     {
                         //left-zig-zig
                         Q.Left = P.Right;
+                        if (P.Right != null) P.Right.Parent = Q;
                         P.Right = Q;
                         P.Left = N.Right;
+                        if (N.Right != null) N.Right.Parent = P;
                         N.Right = P;
                         N.Parent = Q.Parent;
                         P.Parent = N;
@@ -60,8 +65,10 @@ namespace _4_set_range_sum
                     {
                         //right zig-zig
                         Q.Right = P.Left;
+                        if (P.Left != null) P.Left.Parent = Q;
                         P.Left = Q;
                         P.Right = N.Left;
+                        if (N.Left != null) N.Left.Parent = P;
                         N.Left = P;
                         N.Parent = Q.Parent;
                         P.Parent = N;
@@ -70,10 +77,12 @@ namespace _4_set_range_sum
                     else if (N.Parent.Left == N && N.Parent.Parent.Right == N.Parent)
                     {
                         // left zig-zag
-                        Q.Left = N.Right;
-                        N.Right = Q;
-                        P.Right = N.Left;
-                        N.Left = P;
+                        Q.Right = N.Left;
+                        if (N.Left != null) N.Left.Parent = Q;
+                        N.Left = Q;
+                        P.Left = N.Right;
+                        if (N.Right != null) N.Right.Parent = P;
+                        N.Right = P;
                         N.Parent = Q.Parent;
                         P.Parent = N;
                         Q.Parent = N;
@@ -81,10 +90,12 @@ namespace _4_set_range_sum
                     else if (N.Parent.Right == N && N.Parent.Parent.Left == N.Parent)
                     {
                         //right zig-zag
-                        Q.Right = N.Left;
-                        N.Left = Q;
-                        P.Left = N.Right;
-                        N.Right = P;
+                        Q.Left = N.Right;
+                        if (N.Right != null) N.Right.Parent = Q;
+                        N.Right = Q;
+                        P.Right = N.Left;
+                        if (N.Left != null) N.Left.Parent = P;
+                        N.Left = P;
                         N.Parent = Q.Parent;
                         P.Parent = N;
                         Q.Parent = N;
@@ -92,6 +103,10 @@ namespace _4_set_range_sum
                     if (N.Parent != null)
                     {
                         if (N.Parent.Left == Q) N.Parent.Left = N; else N.Parent.Right = N;
+                    }
+                    else
+                    {
+                        root = N;
                     }
                 }
             }
@@ -109,10 +124,12 @@ namespace _4_set_range_sum
             else if (node.Key > key)
             {
                 node.Left = newNode;
+                newNode.Parent = node;
             }
             else if (node.Key < key)
             {
                 node.Right = newNode;
+                newNode.Parent = node;
             }
             return newNode;
         }
@@ -150,7 +167,7 @@ namespace _4_set_range_sum
             {
                 while (node != null && node.Key < key) node = node.Parent;
             }
-            return node;
+            return node.Key > key ? node : null;
         }
 
         public void Add(long key)
@@ -169,37 +186,86 @@ namespace _4_set_range_sum
         public void Remove(long key)
         {
             var node = Find(key);
-            if (node.Key == key)
+            if (node?.Key == key)
             {
-                var next = Next(node.Key);
-                if (next == null)
+                if (node == root && root.Right == null)
                 {
-                    node.Parent.Right = null;
-                    node.Parent = null;
+                    var newRoot = root.Left;
+                    root.Left = null;
+                    if (newRoot != null) newRoot.Parent = null;
+                    root = newRoot;
                 }
                 else
                 {
-                    Splay(next);
-                    Splay(node);
-                    next.Left = node.Left;
-                    next.Left.Parent = next;
-                    root = next;
-                    next.Parent = null;
+                    var next = Next(node.Key);
+                    if (next == null)
+                    {
+                        node.Parent.Right = null;
+                        node.Parent = null;
+                    }
+                    else
+                    {
+                        Splay(next);
+                        Splay(node);
+                        next.Left = node.Left;
+                        if (next.Left != null) next.Left.Parent = next;
+                        root = next;
+                        next.Parent = null;
+                    }
                 }
             }
         }
 
         public long Sum(long l, long r)
         {
-            return 0;
+            long result = 0;
+            while (l <= r)
+            {
+                var node = Find(l);
+                if (node == null) break;
+                if (node.Key >= l && node.Key <= r) result += node.Key;
+                var next = Next(node.Key);
+                if (next == null) break;
+                l = next.Key;
+            }
+            return result;
         }
     }
 
     public static class SetRangeSum
     {
+        private const long M = 1000000001;
+
         public static string[] Solve(string[] commands)
         {
-            return new string[0];
+            var tree = new SplayTree();
+            long lastSum = 0;
+            var count = 0;
+            var result = new string[commands.Length];
+            for (int i = 0; i < commands.Length; i++)
+            {
+                var command = commands[i].Split(' ');
+                long arg = (long.Parse(command[1]) + lastSum) % M;
+                switch (command[0])
+                {
+                    case "+":
+                        tree.Add(arg);
+                        break;
+                    case "-":
+                        tree.Remove(arg);
+                        break;
+                    case "?":
+                        var node = tree.Find(arg);
+                        result[count++] = (node?.Key == arg) ? "Found" : "Not found";
+                        break;
+                    case "s":
+                        long arg2 = (long.Parse(command[2]) + lastSum) % M;
+                        lastSum = tree.Sum(arg, arg2);
+                        result[count++] = lastSum.ToString();
+                        break;
+                }
+            }
+            return result.Take(count).ToArray();
         }
 
         static void Main(string[] args)
