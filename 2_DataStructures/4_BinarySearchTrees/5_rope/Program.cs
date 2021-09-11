@@ -128,6 +128,20 @@ namespace _5_rope
             node.Size = 1 + (node.Left?.Size ?? 0) + (node.Right?.Size ?? 0);
         }
 
+        public static int Index(Node node)
+        {
+            var index = node?.Left?.Size ?? 0;
+            while (node?.Parent != null)
+            {
+                if (node.Parent.Right == node)
+                {
+                    index += 1 + (node.Parent.Left?.Size ?? 0);
+                }
+                node = node.Parent;
+            }
+            return index;
+        }
+
         public static Node Add(Node r, int idx, char letter)
         {
             var newNode = new Node(letter);
@@ -141,15 +155,16 @@ namespace _5_rope
                 node.Right = newNode;
                 newNode.Parent = node;
             }
+            var cNode = newNode;
+            while (cNode != null)
+            {
+                RecomputeSize(cNode);
+                cNode = cNode.Parent;
+            }
+
             r = Splay(r, newNode);
             node = FindNs(r, SplayTree.Rnd.Next(1000) % (idx + 1));
             if (node != r) r = Splay(r, node);
-
-            while (newNode != null)
-            {
-                RecomputeSize(newNode);
-                newNode = newNode.Parent;
-            }
             return r;
         }
 
@@ -188,9 +203,8 @@ namespace _5_rope
             return node;
         }
 
-        public static Node[] SplitLeft(Node r, int x)
+        private static Node[] SplitL(Node N)
         {
-            var N = Find(r, x);
             var result = new Node[2];
             result[0] = N.Left;
             result[1] = N;
@@ -201,9 +215,8 @@ namespace _5_rope
             return result;
         }
 
-        public static Node[] SplitRight(Node r, int x)
+        private static Node[] SplitR(Node N)
         {
-            var N = Find(r, x);
             var result = new Node[2];
             result[0] = N;
             result[1] = N.Right;
@@ -212,6 +225,20 @@ namespace _5_rope
             RecomputeSize(result[0]);
             RecomputeSize(result[1]);
             return result;
+        }
+
+        public static Node[] SplitLeft(Node r, int x)
+        {
+            if (r == null) return new Node[] { null, null };
+            var N = Find(r, x);
+            return Index(N) < x ? SplitR(N) : SplitL(N);
+        }
+
+        public static Node[] SplitRight(Node r, int x)
+        {
+            if (r == null) return new Node[] { null, null };
+            var N = Find(r, x);
+            return Index(N) > x ? SplitL(N) : SplitR(N);
         }
 
         public static Node[] Cut(Node r, int i, int j)
@@ -269,6 +296,18 @@ namespace _5_rope
 
     public static class Rope
     {
+        public static string Naive(string input, string[] queries)
+        {
+            foreach (var query in queries)
+            {
+                var queryData = query.Split(' ').Select(q => int.Parse(q)).ToArray();
+                var sub = input.Substring(queryData[0], queryData[1] - queryData[0] + 1);
+                input = input.Remove(queryData[0], queryData[1] - queryData[0] + 1);
+                input = input.Insert(queryData[2], sub);
+            }
+            return input;
+        }
+
         public static string Solve(string input, string[] queries)
         {
             Node tree = null;

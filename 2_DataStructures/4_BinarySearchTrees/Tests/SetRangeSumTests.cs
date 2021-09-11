@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Xunit;
@@ -67,9 +68,13 @@ namespace Tests
             {
                 if (!tf.Contains(".a"))
                 {
+                    Stopwatch w = new Stopwatch();
                     var lines = File.ReadAllLines(tf);
                     var answer = File.ReadAllLines($"{tf}.a");
+                    w.Start();
                     Assert.Equal(answer, SetRangeSum.Solve(lines.Skip(1).ToArray()));
+                    w.Stop();
+                    Assert.True(w.ElapsedMilliseconds < 1500);
                 }
             }
         }

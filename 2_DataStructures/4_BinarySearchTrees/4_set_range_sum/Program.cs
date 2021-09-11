@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.IO;
+using System;
 using System.Linq;
 
 namespace _4_set_range_sum
@@ -9,6 +10,7 @@ namespace _4_set_range_sum
         public Node Left;
         public Node Right;
         public long Key;
+        public long Sum;
         public Node(long key)
         {
             Key = key;
@@ -17,32 +19,40 @@ namespace _4_set_range_sum
 
     public class SplayTree
     {
-        private Node root;
-
-        private void Splay(Node N)
+        private void RecomputeSum(Node node)
         {
-            if (N == null) return;
-            while (N != root)
+            if (node == null) return;
+            node.Sum = node.Key + (node.Left?.Sum ?? 0) + (node.Right?.Sum ?? 0);
+        }
+
+        private Node Splay(Node N, Node r)
+        {
+            if (N == null) return r;
+            while (N != r)
             {
-                if (N.Parent == root && root.Left == N)
+                if (N.Parent == r && r.Left == N)
                 {
                     // left zig
-                    root.Left = N.Right;
-                    if (N.Right != null) N.Right.Parent = root;
-                    N.Right = root;
-                    root.Parent = N;
+                    r.Left = N.Right;
+                    if (N.Right != null) N.Right.Parent = r;
+                    N.Right = r;
+                    r.Parent = N;
                     N.Parent = null;
-                    root = N;
+                    r = N;
+                    RecomputeSum(N.Right);
+                    RecomputeSum(N);
                 }
-                else if (N.Parent == root && root.Right == N)
+                else if (N.Parent == r && r.Right == N)
                 {
                     // right zig
-                    root.Right = N.Left;
-                    if (N.Left != null) N.Left.Parent = root;
-                    N.Left = root;
-                    root.Parent = N;
+                    r.Right = N.Left;
+                    if (N.Left != null) N.Left.Parent = r;
+                    N.Left = r;
+                    r.Parent = N;
                     N.Parent = null;
-                    root = N;
+                    r = N;
+                    RecomputeSum(N.Left);
+                    RecomputeSum(N);
                 }
                 else
                 {
@@ -106,20 +116,24 @@ namespace _4_set_range_sum
                     }
                     else
                     {
-                        root = N;
+                        r = N;
                     }
+                    RecomputeSum(Q);
+                    RecomputeSum(P);
+                    RecomputeSum(N);
                 }
             }
+            return r;
         }
 
-        private Node AddNs(long key)
+        private Node AddNs(long key, Node r)
         {
             var newNode = new Node(key);
-            var node = FindNs(key);
+            var node = FindNs(key, r);
             if (node?.Key == key) return null;
             if (node == null)
             {
-                root = newNode;
+                return newNode;
             }
             else if (node.Key > key)
             {
@@ -131,12 +145,18 @@ namespace _4_set_range_sum
                 node.Right = newNode;
                 newNode.Parent = node;
             }
+            var cNode = newNode;
+            while (cNode != null)
+            {
+                RecomputeSum(cNode);
+                cNode = cNode.Parent;
+            }
             return newNode;
         }
 
-        private Node FindNs(long key)
+        private Node FindNs(long key, Node r)
         {
-            var node = root;
+            var node = r;
             while (node != null && node.Key != key)
             {
                 if (node.Key > key && node.Left != null)
@@ -155,9 +175,9 @@ namespace _4_set_range_sum
             return node;
         }
 
-        private Node Next(long key)
+        private Node Next(long key, Node r)
         {
-            var node = FindNs(key);
+            var node = FindNs(key, r);
             if (node.Right != null)
             {
                 node = node.Right;
@@ -170,34 +190,36 @@ namespace _4_set_range_sum
             return node.Key > key ? node : null;
         }
 
-        public void Add(long key)
+        public Node Add(long key, Node r)
         {
-            var node = AddNs(key);
-            Splay(node);
+            var node = AddNs(key, r);
+            if (r == null) r = node;
+            return Splay(node, r);
         }
 
-        public Node Find(long key)
+        public Node Find(long key, Node r)
         {
-            var node = FindNs(key);
-            Splay(node);
+            var node = FindNs(key, r);
+            Splay(node, r);
             return node;
         }
 
-        public void Remove(long key)
+        public Node Remove(long key, Node r)
         {
-            var node = Find(key);
+            var node = Find(key, r);
+            r = node;
             if (node?.Key == key)
             {
-                if (node == root && root.Right == null)
+                if (node == r && r.Right == null)
                 {
-                    var newRoot = root.Left;
-                    root.Left = null;
+                    var newRoot = r.Left;
+                    r.Left = null;
                     if (newRoot != null) newRoot.Parent = null;
-                    root = newRoot;
+                    r = newRoot;
                 }
                 else
                 {
-                    var next = Next(node.Key);
+                    var next = Next(node.Key, r);
                     if (next == null)
                     {
                         node.Parent.Right = null;
@@ -205,30 +227,79 @@ namespace _4_set_range_sum
                     }
                     else
                     {
-                        Splay(next);
-                        Splay(node);
+                        r = Splay(next, r);
+                        Splay(node, r);
                         next.Left = node.Left;
                         if (next.Left != null) next.Left.Parent = next;
-                        root = next;
+                        r = next;
                         next.Parent = null;
                     }
                 }
             }
+            return r;
         }
 
-        public long Sum(long l, long r)
+        private Node[] SplitL(Node N)
         {
-            long result = 0;
-            while (l <= r)
-            {
-                var node = Find(l);
-                if (node == null) break;
-                if (node.Key >= l && node.Key <= r) result += node.Key;
-                var next = Next(node.Key);
-                if (next == null) break;
-                l = next.Key;
-            }
+            var result = new Node[2];
+            result[0] = N.Left;
+            result[1] = N;
+            if (result[1] != null) result[1].Left = null;
+            if (result[0] != null) result[0].Parent = null;
+            RecomputeSum(result[0]);
+            RecomputeSum(result[1]);
             return result;
+        }
+
+        private Node[] SplitR(Node N)
+        {
+            var result = new Node[2];
+            result[0] = N;
+            result[1] = N.Right;
+            if (result[0] != null) result[0].Right = null;
+            if (result[1] != null) result[1].Parent = null;
+            RecomputeSum(result[0]);
+            RecomputeSum(result[1]);
+            return result;
+        }
+
+        private Node[] SplitLeft(Node r, long x)
+        {
+            if (r == null) return new Node[] { null, null };
+            var N = Find(x, r);
+            return N.Key < x ? SplitR(N) : SplitL(N);
+        }
+
+        private Node[] SplitRight(Node r, long x)
+        {
+            if (r == null) return new Node[] { null, null };
+            var N = Find(x, r);
+            return N.Key > x ? SplitL(N) : SplitR(N);
+        }
+
+        public Node Merge(Node t1, Node t2)
+        {
+            if (t1 == null) return t2;
+            if (t2 == null) return t1;
+            var maxT1 = Find(long.MaxValue, t1);
+            maxT1.Right = t2;
+            t2.Parent = maxT1;
+            RecomputeSum(maxT1?.Right);
+            RecomputeSum(maxT1);
+            return maxT1;
+        }
+
+        public Node Sum(long l, long h, Node r, out long sum)
+        {
+            sum = 0;
+            if (r != null)
+            {
+                var t1 = SplitLeft(r, l);
+                var t2 = SplitRight(t1[1], h);
+                sum = t2[0]?.Sum ?? 0;
+                r = Merge(Merge(t1[0], t2[0]), t2[1]);
+            }
+            return r;
         }
     }
 
@@ -242,6 +313,7 @@ namespace _4_set_range_sum
             long lastSum = 0;
             var count = 0;
             var result = new string[commands.Length];
+            Node root = null;
             for (int i = 0; i < commands.Length; i++)
             {
                 var command = commands[i].Split(' ');
@@ -249,18 +321,19 @@ namespace _4_set_range_sum
                 switch (command[0])
                 {
                     case "+":
-                        tree.Add(arg);
+                        root = tree.Add(arg, root);
                         break;
                     case "-":
-                        tree.Remove(arg);
+                        root = tree.Remove(arg, root);
                         break;
                     case "?":
-                        var node = tree.Find(arg);
+                        var node = tree.Find(arg, root);
+                        root = node;
                         result[count++] = (node?.Key == arg) ? "Found" : "Not found";
                         break;
                     case "s":
                         long arg2 = (long.Parse(command[2]) + lastSum) % M;
-                        lastSum = tree.Sum(arg, arg2);
+                        root = tree.Sum(arg, arg2, root, out lastSum);
                         result[count++] = lastSum.ToString();
                         break;
                 }

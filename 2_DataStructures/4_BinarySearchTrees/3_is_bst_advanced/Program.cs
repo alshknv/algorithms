@@ -91,10 +91,7 @@ namespace _3_is_bst_advanced
             var input = new string[n];
             for (int i = 0; i < n; i++)
                 input[i] = Console.ReadLine();
-            foreach (var line in Solve(input))
-            {
-                Console.WriteLine(line);
-            }
+            Console.WriteLine(Solve(input));
         }
     }
 }
