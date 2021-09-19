@@ -4,7 +4,7 @@ using _1_acyclicity;
 
 namespace Tests
 {
-    public class UnitTest1
+    public class AciclicityTests
     {
         [Fact]
         public void Example1()
@@ -20,7 +20,8 @@ namespace Tests
         }
 
         [Fact]
-        public void Example2() {
+        public void Example2()
+        {
             Assert.Equal("1", Acyclicity.Solve(new string[]{
                 "2 2",
                 "1 2",

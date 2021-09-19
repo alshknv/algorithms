@@ -10,56 +10,46 @@ namespace _2_toposort
         public int[] Destinations;
         public int DestinationCount;
         public int DestinationIdx;
+        public bool Deleted;
         public int CurrentDestination
         {
             get { return Destinations[DestinationIdx]; }
         }
-        public bool Deleted;
-
+        public Vertex(int maxCount)
+        {
+            Destinations = (int[])Array.CreateInstance(typeof(int), maxCount);
+        }
         public void AddDestination(int destination)
         {
             Destinations[DestinationCount++] = destination;
-        }
-
-        public Vertex(int maxCount)
-        {
-            Destinations = new int[maxCount];
         }
     }
 
     public static class Toposort
     {
-        private static Vertex[] Vertices;
-
-        private static Stack<int> Sort;
-        private static int SortIdx;
-
-        private static void DFS(int index)
+        private static void DFS(Vertex[] vertices, Stack<int> sort, int index)
         {
             var vertexStack = new Stack<int>();
             vertexStack.Push(index);
             while (vertexStack.Count > 0)
             {
-                var v = vertexStack.Peek();
-                if (Vertices[v].DestinationIdx >= Vertices[v].DestinationCount)
+                var vx = vertexStack.Peek();
+                while (vertices[vx].DestinationIdx < vertices[vx].DestinationCount &&
+                        vertices[vertices[vx].CurrentDestination].Deleted)
+                {
+                    vertices[vx].DestinationIdx++;
+                }
+                if (vertices[vx].DestinationIdx >= vertices[vx].DestinationCount)
                 {
                     // is sink
                     vertexStack.Pop();
-                    Vertices[v].Deleted = true;
-                    Sort.Push(v);
+                    vertices[vx].Deleted = true;
+                    sort.Push(vx);
                 }
                 else
                 {
-                    while (Vertices[v].DestinationIdx < Vertices[v].DestinationCount &&
-                        Vertices[Vertices[v].CurrentDestination].Deleted)
-                    {
-                        Vertices[v].DestinationIdx++;
-                    }
-                    if (Vertices[v].DestinationIdx < Vertices[v].DestinationCount)
-                    {
-                        vertexStack.Push(Vertices[v].Destinations[Vertices[v].DestinationIdx]);
-                        Vertices[v].DestinationIdx++;
-                    }
+                    vertexStack.Push(vertices[vx].CurrentDestination);
+                    vertices[vx].DestinationIdx++;
                 }
             }
         }
@@ -68,27 +58,35 @@ namespace _2_toposort
         {
             // graph init
             var graphInfo = input[0].Split(' ').Select(x => int.Parse(x)).ToArray();
-            Sort = new Stack<int>();
-            Vertices = new Vertex[graphInfo[0] + 1];
-            for (int i = 1; i <= graphInfo[0]; i++) Vertices[i] = new Vertex(graphInfo[1]);
+            var sort = new Stack<int>();
+            var vertices = new Vertex[graphInfo[0] + 1];
+            for (int k = 1; k <= graphInfo[0]; k++)
+            {
+                vertices[k] = new Vertex(graphInfo[0]);
+            }
             for (int i = 0; i < graphInfo[1]; i++)
             {
                 var edgeInfo = input[i + 1].Split(' ').Select(x => int.Parse(x)).ToArray();
-                Vertices[edgeInfo[0]].AddDestination(edgeInfo[1]);
+                vertices[edgeInfo[0]].AddDestination(edgeInfo[1]);
             }
 
             // topology sort
             var v = 1;
             while (v <= graphInfo[0])
             {
-                while (v <= graphInfo[0] && Vertices[v].Deleted) v++;
+                while (v <= graphInfo[0] && vertices[v].Deleted) v++;
                 if (v <= graphInfo[0])
                 {
-                    DFS(v);
+                    DFS(vertices, sort, v);
+                    v++;
                 }
-                v++;
             }
-            return string.Join(" ", Sort);
+            var result = sort.Count > 0 ? sort.Pop().ToString() : "";
+            while (sort.Count > 0)
+            {
+                result = $"{result} {sort.Pop()}";
+            }
+            return result;
         }
 
         static void Main(string[] args)
