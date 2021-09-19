@@ -6,20 +6,16 @@ namespace _3_strongly_connected
 {
     public class Vertex
     {
-        public int[] Destinations;
-        public int DestinationCount;
-        public int DestinationIdx;
+        public LinkedList<int> Destinations = new LinkedList<int>();
         public int CurrentDestination
         {
-            get { return Destinations[DestinationIdx]; }
+            get { return Destinations.First.Value; }
         }
 
-        public int[] DestinationsR;
-        public int DestinationRCount;
-        public int DestinationRIdx;
+        public LinkedList<int> DestinationsR = new LinkedList<int>();
         public int CurrentDestinationR
         {
-            get { return DestinationsR[DestinationRIdx]; }
+            get { return DestinationsR.First.Value; }
         }
 
         public bool Visited;
@@ -28,17 +24,11 @@ namespace _3_strongly_connected
 
         public void AddDestination(int destination)
         {
-            Destinations[DestinationCount++] = destination;
+            Destinations.AddLast(destination);
         }
         public void AddDestinationR(int destination)
         {
-            DestinationsR[DestinationRCount++] = destination;
-        }
-
-        public Vertex(int maxCount)
-        {
-            Destinations = new int[maxCount];
-            DestinationsR = new int[maxCount];
+            DestinationsR.AddLast(destination);
         }
     }
     public static class StronglyConnected
@@ -53,20 +43,19 @@ namespace _3_strongly_connected
             {
                 var vx = vertexStack.Peek();
                 if (Vertices[vx].PreVisit == null) Vertices[vx].PreVisit = counter++;
-                while (Vertices[vx].DestinationRIdx < Vertices[vx].DestinationRCount &&
+                while (Vertices[vx].DestinationsR.Count > 0 &&
                         Vertices[Vertices[vx].CurrentDestinationR].PreVisit != null)
                 {
-                    Vertices[vx].DestinationRIdx++;
+                    Vertices[vx].DestinationsR.RemoveFirst();
                 }
-                if (Vertices[vx].DestinationRIdx >= Vertices[vx].DestinationRCount)
+                if (Vertices[vx].DestinationsR.Count == 0)
                 {
                     vertexStack.Pop();
                     Vertices[vx].PostVisit = counter++;
                 }
                 else
                 {
-                    vertexStack.Push(Vertices[vx].DestinationsR[Vertices[vx].DestinationRIdx]);
-                    Vertices[vx].DestinationRIdx++;
+                    vertexStack.Push(Vertices[vx].CurrentDestinationR);
                 }
             }
             return counter;
@@ -80,21 +69,20 @@ namespace _3_strongly_connected
             {
                 var vi = vertexStack.Peek();
                 Vertices[vi].Visited = true;
-                if (Vertices[vi].DestinationIdx >= Vertices[vi].DestinationCount)
+                if (Vertices[vi].Destinations.Count == 0)
                 {
                     vertexStack.Pop();
                 }
                 else
                 {
-                    while (Vertices[vi].DestinationIdx < Vertices[vi].DestinationCount &&
+                    while (Vertices[vi].Destinations.Count > 0 &&
                         Vertices[Vertices[vi].CurrentDestination].Visited)
                     {
-                        Vertices[vi].DestinationIdx++;
+                        Vertices[vi].Destinations.RemoveFirst();
                     }
-                    if (Vertices[vi].DestinationIdx < Vertices[vi].DestinationCount)
+                    if (Vertices[vi].Destinations.Count > 0)
                     {
-                        vertexStack.Push(Vertices[vi].Destinations[Vertices[vi].DestinationIdx]);
-                        Vertices[vi].DestinationIdx++;
+                        vertexStack.Push(Vertices[vi].CurrentDestination);
                     }
                 }
             }
@@ -105,7 +93,7 @@ namespace _3_strongly_connected
             // graph init
             var graphInfo = input[0].Split(' ').Select(x => int.Parse(x)).ToArray();
             Vertices = new Vertex[graphInfo[0] + 1];
-            for (int i = 1; i <= graphInfo[0]; i++) Vertices[i] = new Vertex(graphInfo[0]);
+            for (int i = 1; i <= graphInfo[0]; i++) Vertices[i] = new Vertex();
             for (int i = 0; i < graphInfo[1]; i++)
             {
                 var edgeInfo = input[i + 1].Split(' ').Select(x => int.Parse(x)).ToArray();

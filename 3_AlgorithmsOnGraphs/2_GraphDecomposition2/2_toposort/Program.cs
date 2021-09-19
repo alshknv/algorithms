@@ -7,21 +7,19 @@ namespace _2_toposort
 {
     public class Vertex
     {
-        public int[] Destinations;
-        public int DestinationCount;
-        public int DestinationIdx;
-        public bool Deleted;
+        public LinkedList<int> Destinations;
         public int CurrentDestination
         {
-            get { return Destinations[DestinationIdx]; }
+            get { return Destinations.First.Value; }
         }
-        public Vertex(int maxCount)
+        public bool Deleted;
+        public Vertex()
         {
-            Destinations = (int[])Array.CreateInstance(typeof(int), maxCount);
+            Destinations = new LinkedList<int>();
         }
         public void AddDestination(int destination)
         {
-            Destinations[DestinationCount++] = destination;
+            Destinations.AddLast(destination);
         }
     }
 
@@ -34,12 +32,11 @@ namespace _2_toposort
             while (vertexStack.Count > 0)
             {
                 var vx = vertexStack.Peek();
-                while (vertices[vx].DestinationIdx < vertices[vx].DestinationCount &&
-                        vertices[vertices[vx].CurrentDestination].Deleted)
+                while (vertices[vx].Destinations.Count > 0 && vertices[vertices[vx].CurrentDestination].Deleted)
                 {
-                    vertices[vx].DestinationIdx++;
+                    vertices[vx].Destinations.RemoveFirst();
                 }
-                if (vertices[vx].DestinationIdx >= vertices[vx].DestinationCount)
+                if (vertices[vx].Destinations.Count == 0)
                 {
                     // is sink
                     vertexStack.Pop();
@@ -49,7 +46,6 @@ namespace _2_toposort
                 else
                 {
                     vertexStack.Push(vertices[vx].CurrentDestination);
-                    vertices[vx].DestinationIdx++;
                 }
             }
         }
@@ -62,7 +58,7 @@ namespace _2_toposort
             var vertices = new Vertex[graphInfo[0] + 1];
             for (int k = 1; k <= graphInfo[0]; k++)
             {
-                vertices[k] = new Vertex(graphInfo[0]);
+                vertices[k] = new Vertex();
             }
             for (int i = 0; i < graphInfo[1]; i++)
             {

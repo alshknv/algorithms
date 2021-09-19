@@ -11,9 +11,11 @@ namespace Tests
         public void Example1()
         {
             Assert.Equal("4 3 1 2", Toposort.Solve(new string[]{
-                "4 3",
+                "4 5",
+                "1 2",
                 "1 2",
                 "4 1",
+                "3 1",
                 "3 1"
             }));
         }
@@ -87,29 +89,6 @@ namespace Tests
                 "6 3",
                 "6 1"
             }));
-        }
-
-        [Fact]
-        public void Stress()
-        {
-            var input = new string[100001];
-            input[0] = "100000 100000";
-            var dict = new Dictionary<(int, int), bool>();
-            var rnd = new Random();
-            for (int k = 0; k < 10; k++)
-            {
-                for (int i = 1; i <= 100000; i++)
-                {
-                    int s, d;
-                    do
-                    {
-                        s = rnd.Next(100000) + 1;
-                        d = rnd.Next(100000) + 1;
-                    } while (dict.ContainsKey((s, d)));
-                    input[i] = $"{s} {d}";
-                }
-                Toposort.Solve(input);
-            }
         }
     }
 }

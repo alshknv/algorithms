@@ -6,24 +6,22 @@ namespace _1_acyclicity
 {
     public class Vertex
     {
-        public int[] Destinations;
-        public int DestinationCount;
-        public int DestinationIdx;
+        public LinkedList<int> Destinations;
         public int CurrentDestination
         {
-            get { return Destinations[DestinationIdx]; }
+            get { return Destinations.First.Value; }
         }
         public bool Deleted;
         public bool Visited;
 
         public void AddDestination(int destination)
         {
-            Destinations[DestinationCount++] = destination;
+            Destinations.AddLast(destination);
         }
 
-        public Vertex(int maxCount)
+        public Vertex()
         {
-            Destinations = new int[maxCount];
+            Destinations = new LinkedList<int>();
         }
     }
 
@@ -39,7 +37,7 @@ namespace _1_acyclicity
             {
                 var v = vertexStack.Peek();
                 Vertices[v].Visited = true;
-                if (Vertices[v].DestinationIdx >= Vertices[v].DestinationCount)
+                if (Vertices[v].Destinations.Count == 0)
                 {
                     // is sink
                     vertexStack.Pop();
@@ -47,12 +45,11 @@ namespace _1_acyclicity
                 }
                 else
                 {
-                    while (Vertices[v].DestinationIdx < Vertices[v].DestinationCount &&
-                        Vertices[Vertices[v].CurrentDestination].Deleted)
+                    while (Vertices[v].Destinations.Count > 0 && Vertices[Vertices[v].CurrentDestination].Deleted)
                     {
-                        Vertices[v].DestinationIdx++;
+                        Vertices[v].Destinations.RemoveFirst();
                     }
-                    if (Vertices[v].DestinationIdx < Vertices[v].DestinationCount)
+                    if (Vertices[v].Destinations.Count > 0)
                     {
                         if (Vertices[Vertices[v].CurrentDestination].Visited)
                         {
@@ -60,8 +57,7 @@ namespace _1_acyclicity
                         }
                         else
                         {
-                            vertexStack.Push(Vertices[v].Destinations[Vertices[v].DestinationIdx]);
-                            Vertices[v].DestinationIdx++;
+                            vertexStack.Push(Vertices[v].CurrentDestination);
                         }
                     }
                 }
@@ -74,7 +70,7 @@ namespace _1_acyclicity
             // graph init
             var graphInfo = input[0].Split(' ').Select(x => int.Parse(x)).ToArray();
             Vertices = new Vertex[graphInfo[0] + 1];
-            for (int i = 1; i <= graphInfo[0]; i++) Vertices[i] = new Vertex(graphInfo[1]);
+            for (int i = 1; i <= graphInfo[0]; i++) Vertices[i] = new Vertex();
             for (int i = 0; i < graphInfo[1]; i++)
             {
                 var edgeInfo = input[i + 1].Split(' ').Select(x => int.Parse(x)).ToArray();
