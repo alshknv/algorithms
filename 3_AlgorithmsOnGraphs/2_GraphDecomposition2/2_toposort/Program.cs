@@ -81,12 +81,7 @@ namespace _2_toposort
                     v++;
                 }
             }
-            var result = sort.Count > 0 ? sort.Pop().ToString() : "";
-            while (sort.Count > 0)
-            {
-                result = $"{result} {sort.Pop()}";
-            }
-            return result;
+            return string.Join(" ", sort);
         }
 
         static void Main(string[] args)
