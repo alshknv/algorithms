@@ -72,12 +72,13 @@ namespace _1_flight_segments
         {
             var nmLine = Console.ReadLine();
             var edgeCount = int.Parse(nmLine.Split(' ').Last());
-            var data = new string[edgeCount + 1];
+            var data = new string[edgeCount + 2];
             data[0] = nmLine;
             for (int i = 0; i < edgeCount; i++)
             {
                 data[i + 1] = Console.ReadLine();
             }
+            data[edgeCount + 1] = Console.ReadLine();
             Console.WriteLine(Solve(data));
         }
     }

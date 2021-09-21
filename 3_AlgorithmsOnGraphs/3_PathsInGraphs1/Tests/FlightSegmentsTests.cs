@@ -3,7 +3,7 @@ using _1_flight_segments;
 
 namespace Tests
 {
-    public class UnitTest1
+    public class FlightSegmentsTests
     {
         [Fact]
         public void Example1()
