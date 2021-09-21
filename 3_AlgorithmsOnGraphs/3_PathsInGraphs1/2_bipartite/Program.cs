@@ -2,7 +2,7 @@
 using System;
 using System.Linq;
 
-namespace _2_toposort
+namespace _2_bipartite
 {
     public class Vertex
     {
@@ -11,7 +11,8 @@ namespace _2_toposort
         {
             get { return Destinations.First.Value; }
         }
-        public bool Deleted;
+        public int Distance = -1;
+        public bool Type;
         public Vertex()
         {
             Destinations = new LinkedList<int>();
@@ -22,31 +23,33 @@ namespace _2_toposort
         }
     }
 
-    public static class Toposort
+    public static class Bipartite
     {
-        private static void DFS(Vertex[] vertices, Stack<int> sort, int index)
+        public static bool BipBFS(Vertex[] vertices, int start)
         {
-            var vertexStack = new Stack<int>();
-            vertexStack.Push(index);
-            while (vertexStack.Count > 0)
+            var queue = new Queue<int>();
+            vertices[start].Distance = 0;
+            queue.Enqueue(start);
+            while (queue.Count > 0)
             {
-                var vx = vertexStack.Peek();
-                while (vertices[vx].Destinations.Count > 0 && vertices[vertices[vx].CurrentDestination].Deleted)
+                var n = queue.Dequeue();
+                while (vertices[n].Destinations.Count > 0)
                 {
-                    vertices[vx].Destinations.RemoveFirst();
-                }
-                if (vertices[vx].Destinations.Count == 0)
-                {
-                    // is sink
-                    vertexStack.Pop();
-                    vertices[vx].Deleted = true;
-                    sort.Push(vx);
-                }
-                else
-                {
-                    vertexStack.Push(vertices[vx].CurrentDestination);
+                    var destination = vertices[n].Destinations.First.Value;
+                    if (vertices[destination].Distance < 0)
+                    {
+                        vertices[destination].Distance = vertices[n].Distance + 1;
+                        vertices[destination].Type = !vertices[n].Type;
+                        queue.Enqueue(destination);
+                    }
+                    else if (vertices[destination].Type == vertices[n].Type)
+                    {
+                        return false;
+                    }
+                    vertices[n].Destinations.RemoveFirst();
                 }
             }
+            return true;
         }
 
         public static string Solve(string[] input)
@@ -62,21 +65,13 @@ namespace _2_toposort
             for (int i = 0; i < graphInfo[1]; i++)
             {
                 var edgeInfo = input[i + 1].Split(' ').Select(x => int.Parse(x)).ToArray();
-                vertices[edgeInfo[0]].AddDestination(edgeInfo[1]);
+                vertices[edgeInfo[0]].AddDestination(edgeInfo[1]); //undirected
+                vertices[edgeInfo[1]].AddDestination(edgeInfo[0]);
             }
+            var points = input[input.Length - 1].Split(' ').Select(x => int.Parse(x)).ToArray();
 
-            // topology sort
-            var v = 1;
-            while (v <= graphInfo[0])
-            {
-                while (v <= graphInfo[0] && vertices[v].Deleted) v++;
-                if (v <= graphInfo[0])
-                {
-                    DFS(vertices, sort, v);
-                    v++;
-                }
-            }
-            return string.Join(" ", sort);
+            // bipartite breadth first search
+            return BipBFS(vertices, points[0]) ? "1" : "0";
         }
 
         static void Main(string[] args)
