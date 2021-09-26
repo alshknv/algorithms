@@ -6,18 +6,11 @@ namespace _2_adding_exits_to_maze
 {
     public class Vertex
     {
-        public int[] Neighbours;
-        public int NeighbourCount;
-        public int NeighbourIdx;
+        public LinkedList<int> Neighbours;
         public bool Visited;
-        public Vertex(int maxCount)
+        public Vertex()
         {
-            Neighbours = new int[maxCount];
-        }
-
-        public void AddNeighbour(int index)
-        {
-            Neighbours[NeighbourCount++] = index;
+            Neighbours = new LinkedList<int>();
         }
     }
 
@@ -33,14 +26,13 @@ namespace _2_adding_exits_to_maze
             {
                 var v = vertexStack.Peek();
                 Vertices[v].Visited = true;
-                while (Vertices[v].NeighbourIdx < Vertices[v].NeighbourCount &&
-                    Vertices[Vertices[v].Neighbours[Vertices[v].NeighbourIdx]].Visited)
+                while (Vertices[v].Neighbours.First != null && Vertices[Vertices[v].Neighbours.First.Value].Visited)
                 {
-                    Vertices[v].NeighbourIdx++;
+                    Vertices[v].Neighbours.RemoveFirst();
                 }
-                if (Vertices[v].NeighbourIdx < Vertices[v].NeighbourCount)
+                if (Vertices[v].Neighbours.First != null)
                 {
-                    vertexStack.Push(Vertices[v].Neighbours[Vertices[v].NeighbourIdx]);
+                    vertexStack.Push(Vertices[v].Neighbours.First.Value);
                 }
                 else
                 {
@@ -54,15 +46,14 @@ namespace _2_adding_exits_to_maze
             // graph init
             var graphInfo = input[0].Split(' ').Select(x => int.Parse(x)).ToArray();
             Vertices = new Vertex[graphInfo[0] + 1];
-            for (int i = 1; i <= graphInfo[0]; i++) Vertices[i] = new Vertex(graphInfo[1]);
+            for (int i = 1; i <= graphInfo[0]; i++) Vertices[i] = new Vertex();
             for (int i = 0; i < graphInfo[1]; i++)
             {
                 var edgeInfo = input[i + 1].Split(' ').Select(x => int.Parse(x)).ToArray();
-                Vertices[edgeInfo[0]].AddNeighbour(edgeInfo[1]);
-                Vertices[edgeInfo[1]].AddNeighbour(edgeInfo[0]);
+                Vertices[edgeInfo[0]].Neighbours.AddLast(edgeInfo[1]);
+                Vertices[edgeInfo[1]].Neighbours.AddLast(edgeInfo[0]);
             }
 
-            // check if there's a path
             var cc = 0;
             var v = 1;
             while (v <= graphInfo[0])
