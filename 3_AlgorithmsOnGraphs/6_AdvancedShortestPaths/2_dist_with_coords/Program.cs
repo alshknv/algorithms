@@ -242,13 +242,13 @@ namespace _2_dist_with_coords
 
         public static string[] Solve(string[] vertexData, string[] edgeData, string[] queryData)
         {
+            //graph init
             var vertices = new Vertex[vertexData.Length + 1];
             for (int i = 1; i <= vertexData.Length; i++)
             {
                 var v = vertexData[i - 1].AsIntArray();
                 vertices[i] = new Vertex(v[0], v[1]);
             }
-            //graph init
             for (int i = 0; i < edgeData.Length; i++)
             {
                 var e = edgeData[i].AsIntArray();
