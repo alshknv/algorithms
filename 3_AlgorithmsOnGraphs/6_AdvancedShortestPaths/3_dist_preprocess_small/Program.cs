@@ -49,9 +49,17 @@ namespace _3_dist_preprocess_small
         {
             Edges.Add(new Edge(source, destination, weight));
         }
+        public void AddEdge(Edge edge)
+        {
+            Edges.Add(edge);
+        }
         public void AddPredecessor(int source, int destination, int weight)
         {
             Predecessors.Add(new Edge(source, destination, weight));
+        }
+        public void AddPredecessor(Edge edge)
+        {
+            Predecessors.Add(edge);
         }
     }
 
@@ -266,7 +274,8 @@ namespace _3_dist_preprocess_small
                     UpdateNeighborImportance(Vertices[node.Index]);
                     foreach (var shortcut in shortcuts)
                     {
-                        Vertices[shortcut.Source].Edges.Add(shortcut);
+                        Vertices[shortcut.Source].AddEdge(shortcut);
+                        Vertices[shortcut.Destination].AddPredecessor(shortcut);
                     }
                     /*var edIdx = 0;
                     while (edIdx < Vertices[node.Index].Edges.Count)
