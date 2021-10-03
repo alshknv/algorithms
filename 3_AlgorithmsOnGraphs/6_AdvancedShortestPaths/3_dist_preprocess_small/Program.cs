@@ -187,6 +187,7 @@ namespace _3_dist_preprocess_small
 
             foreach (var pred in Vertices[nindex].Predecessors)
             {
+                if (Vertices[pred.Source].Contracted) continue;
                 // witness dijkstra
                 var dist = new long[Vertices.Length];
                 for (int i = 0; i < Vertices.Length; i++)
@@ -217,7 +218,7 @@ namespace _3_dist_preprocess_small
 
                 foreach (var succ in Vertices[nindex].Edges)
                 {
-                    if (dist[succ.Destination] > pred.Weight + succ.Weight)
+                    if (dist[succ.Destination] > pred.Weight + succ.Weight && !Vertices[succ.Destination].Contracted)
                     {
                         //add shortcut
                         shortcuts.Add(new Edge(pred.Source, succ.Destination, pred.Weight + succ.Weight));
