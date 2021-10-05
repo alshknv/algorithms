@@ -190,6 +190,7 @@ namespace _3_dist_preprocess_small
                 if (Vertices[pred.Source].Contracted) continue;
                 // witness dijkstra
                 var dist = new long[Vertices.Length];
+                var hops = new int[Vertices.Length];
                 for (int i = 0; i < Vertices.Length; i++)
                 {
                     dist[i] = long.MaxValue;
@@ -206,8 +207,9 @@ namespace _3_dist_preprocess_small
                         if (dist[v.Destination] > dist[u.Index] + v.Weight)
                         {
                             dist[v.Destination] = dist[u.Index] + v.Weight;
+                            hops[v.Destination] = hops[u.Index] + 1;
                             queue.ChangePriority(u, v.Destination, dist[v.Destination]);
-                            if (dist[v.Destination] > maxL)
+                            if (dist[v.Destination] > maxL || hops[v.Destination] > 10)
                             {
                                 queue.Clear();
                                 break;
@@ -220,7 +222,7 @@ namespace _3_dist_preprocess_small
                 {
                     if (dist[succ.Destination] > pred.Weight + succ.Weight && !Vertices[succ.Destination].Contracted)
                     {
-                        //add shortcut
+                        //planning shortcut
                         shortcuts.Add(new Edge(pred.Source, succ.Destination, pred.Weight + succ.Weight));
                     }
                 }
@@ -273,21 +275,22 @@ namespace _3_dist_preprocess_small
                     Vertices[node.Index].Contracted = true;
                     Vertices[node.Index].Order = contractOrder++;
                     UpdateNeighborImportance(Vertices[node.Index]);
+                    
+                    // after node is contracted we store upward connections only
+                    Vertices[node.Index].Edges.AddRange(
+                        Vertices[node.Index].Predecessors
+                            .Select(p=>new Edge(p.Destination, p.Source, p.Weight)));
+                    Vertices[node.Index].Edges.RemoveAll(e =>
+                        Vertices[e.Destination].Contracted &&
+                        Vertices[e.Destination].Order < Vertices[node.Index].Order);
+                    Vertices[node.Index].Predecessors.Clear();
+                    
+                    // adding shortcut
                     foreach (var shortcut in shortcuts)
                     {
                         Vertices[shortcut.Source].AddEdge(shortcut);
                         Vertices[shortcut.Destination].AddPredecessor(shortcut);
                     }
-                    /*var edIdx = 0;
-                    while (edIdx < Vertices[node.Index].Edges.Count)
-                    {
-                        var succ = Vertices[node.Index].Edges[edIdx];
-                        if (Vertices[succ.Destination].Contracted && Vertices[succ.Destination].Order < Vertices[node.Index].Order)
-                        {
-                            Vertices[node.Index].Edges.RemoveAt(edIdx);
-                        }
-                        else { edIdx++; }
-                    }*/
                 }
                 else
                 {
@@ -296,10 +299,71 @@ namespace _3_dist_preprocess_small
                 }
             }
         }
-
-        public static string[] Query(string[] queries)
+        
+        private static bool Process(QueueItem q, PriorityQueue queue, long[] dist, bool[] proc)
         {
-            return new string[1];
+            if (dist[q.Index] < long.MaxValue && !proc[q.Index])
+            {
+                foreach (var edge in Vertices[q.Index].Edges) {
+                    if (dist[edge.Destination] > dist[q.Index] + edge.Weight)
+                    {
+                        dist[edge.Destination] = dist[q.Index] + edge.Weight;
+                        queue.ChangePriority(q, edge.Destination, dist[edge.Destination]);
+                    }
+                }
+                proc[q.Index] = true;
+                return true;
+            }
+            return false;
+        }
+
+        public static string[] ProcessQueries(string[] queries)
+        {
+            var result = new string[queries.Length];
+            for (int k=0; k<queries.Length; k++)
+            {
+                var query = queries[k].AsIntArray();
+                // bidirectional upward Dijkstra
+                var estimate = long.MaxValue;
+                var dist = new long[Vertices.Length];
+                var distR = new long[Vertices.Length];
+                var proc = new bool[Vertices.Length];
+                var procR = new bool[Vertices.Length];
+                for (int i = 0; i < Vertices.Length; i++)
+                {
+                    dist[i] = distR[i] = long.MaxValue;
+                }
+                dist[query[0]] = distR[query[1]] = 0;
+
+                var queue = new PriorityQueue(dist.Skip(1).ToArray());
+                var queueR = new PriorityQueue(distR.Skip(1).ToArray());
+
+                while (!queue.Empty() && !queueR.Empty())
+                {
+                    if (!queue.Empty())
+                    {
+                        var q = queue.ExtractMin();
+                        if (dist[q.Index] <= estimate)
+                        {
+                            Process(q, queue, dist, proc);
+                            if (procR[q.Index] && dist[q.Index] + distR[q.Index] < estimate)
+                                estimate = dist[q.Index] + distR[q.Index];
+                        }
+                    }
+                    if (!queueR.Empty())
+                    {
+                        var q = queueR.ExtractMin();
+                        if (distR[q.Index] <= estimate)
+                        {
+                            Process(q, queueR, distR, procR);
+                            if (proc[q.Index] && dist[q.Index] + distR[q.Index] < estimate)
+                                estimate = dist[q.Index] + distR[q.Index];
+                        }
+                    }
+                }
+                result[k] = estimate.ToString();
+            }
+            return result;
         }
 
         static void Main(string[] args)
@@ -318,7 +382,7 @@ namespace _3_dist_preprocess_small
             {
                 queries[i] = Console.ReadLine();
             }
-            foreach (var line in Query(queries))
+            foreach (var line in ProcessQueries(queries))
             {
                 Console.WriteLine(line);
             }
