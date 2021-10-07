@@ -30,6 +30,7 @@ namespace _3_dist_preprocess_small
     {
         public readonly List<Edge> Edges;
         public readonly List<Edge> Predecessors;
+        public List<Edge> EdgesR;
         public int Order;
         public int Level;
         public int ContractedNeighbors;
@@ -42,8 +43,8 @@ namespace _3_dist_preprocess_small
         }
         public Vertex()
         {
-            Edges = new List<Edge>();
-            Predecessors = new List<Edge>();
+            Edges = new List<Edge>(10000);
+            Predecessors = new List<Edge>(10000);
         }
         public void AddEdge(int source, int destination, int weight)
         {
@@ -175,7 +176,7 @@ namespace _3_dist_preprocess_small
 
         private static Edge[] WitnessSearch(int nindex)
         {
-            var shortcuts = new List<Edge>();
+            var shortcuts = new List<Edge>(1000);
             var maxL = 0;
             foreach (var pred in Vertices[nindex].Predecessors)
             {
@@ -275,16 +276,17 @@ namespace _3_dist_preprocess_small
                     Vertices[node.Index].Contracted = true;
                     Vertices[node.Index].Order = contractOrder++;
                     UpdateNeighborImportance(Vertices[node.Index]);
-                    
-                    // after node is contracted we store upward connections only
-                    Vertices[node.Index].Edges.AddRange(
-                        Vertices[node.Index].Predecessors
-                            .Select(p=>new Edge(p.Destination, p.Source, p.Weight)));
-                    Vertices[node.Index].Edges.RemoveAll(e =>
-                        Vertices[e.Destination].Contracted &&
-                        Vertices[e.Destination].Order < Vertices[node.Index].Order);
+
+                    // after node is contracted we store upward outgoing edges for forward search
+                    // and upward predecessor connections as edges for reverse search
+                    Vertices[node.Index].EdgesR = Vertices[node.Index].Predecessors
+                        .Where(p => !Vertices[p.Source].Contracted || Vertices[p.Source].Order > Vertices[node.Index].Order)
+                        .Select(p => new Edge(p.Destination, p.Source, p.Weight))
+                        .ToList();
                     Vertices[node.Index].Predecessors.Clear();
-                    
+                    Vertices[node.Index].Edges
+                        .RemoveAll(e => Vertices[e.Destination].Contracted && Vertices[e.Destination].Order < Vertices[node.Index].Order);
+
                     // adding shortcut
                     foreach (var shortcut in shortcuts)
                     {
@@ -299,12 +301,13 @@ namespace _3_dist_preprocess_small
                 }
             }
         }
-        
-        private static bool Process(QueueItem q, PriorityQueue queue, long[] dist, bool[] proc)
+
+        private static bool Process(QueueItem q, PriorityQueue queue, long[] dist, bool[] proc, bool forward)
         {
             if (dist[q.Index] < long.MaxValue && !proc[q.Index])
             {
-                foreach (var edge in Vertices[q.Index].Edges) {
+                foreach (var edge in forward ? Vertices[q.Index].Edges : Vertices[q.Index].EdgesR)
+                {
                     if (dist[edge.Destination] > dist[q.Index] + edge.Weight)
                     {
                         dist[edge.Destination] = dist[q.Index] + edge.Weight;
@@ -320,7 +323,7 @@ namespace _3_dist_preprocess_small
         public static string[] ProcessQueries(string[] queries)
         {
             var result = new string[queries.Length];
-            for (int k=0; k<queries.Length; k++)
+            for (int k = 0; k < queries.Length; k++)
             {
                 var query = queries[k].AsIntArray();
                 // bidirectional upward Dijkstra
@@ -345,9 +348,11 @@ namespace _3_dist_preprocess_small
                         var q = queue.ExtractMin();
                         if (dist[q.Index] <= estimate)
                         {
-                            Process(q, queue, dist, proc);
-                            if (procR[q.Index] && dist[q.Index] + distR[q.Index] < estimate)
-                                estimate = dist[q.Index] + distR[q.Index];
+                            if (Process(q, queue, dist, proc, true))
+                            {
+                                if (procR[q.Index] && dist[q.Index] + distR[q.Index] < estimate)
+                                    estimate = dist[q.Index] + distR[q.Index];
+                            }
                         }
                     }
                     if (!queueR.Empty())
@@ -355,13 +360,15 @@ namespace _3_dist_preprocess_small
                         var q = queueR.ExtractMin();
                         if (distR[q.Index] <= estimate)
                         {
-                            Process(q, queueR, distR, procR);
-                            if (proc[q.Index] && dist[q.Index] + distR[q.Index] < estimate)
-                                estimate = dist[q.Index] + distR[q.Index];
+                            if (Process(q, queueR, distR, procR, false))
+                            {
+                                if (proc[q.Index] && dist[q.Index] + distR[q.Index] < estimate)
+                                    estimate = dist[q.Index] + distR[q.Index];
+                            }
                         }
                     }
                 }
-                result[k] = estimate.ToString();
+                result[k] = (estimate < long.MaxValue ? estimate : -1).ToString();
             }
             return result;
         }
