@@ -68,13 +68,11 @@ namespace _5_travelling_salesman_problem
     {
         public readonly int Index;
         public readonly long Value;
-        public bool Active;
 
-        public QueueItem(int index, long value, bool active)
+        public QueueItem(int index, long value)
         {
             Index = index;
             Value = value;
-            Active = active;
         }
     }
 
@@ -95,7 +93,7 @@ namespace _5_travelling_salesman_problem
             {
                 index = nextI;
                 var p = (index - 1) / 2;
-                if (!data[p].Active || (p >= 0 && (data[index].Value < data[p].Value)))
+                if (p >= 0 && (data[index].Value < data[p].Value))
                 {
                     nextI = p;
                     Swap(index, nextI);
@@ -123,17 +121,17 @@ namespace _5_travelling_salesman_problem
             }
         }
 
-        public PriorityQueue(Vertex[] vertices)
+        public PriorityQueue(int count)
         {
-            data = vertices.Select((x, i) => new QueueItem(i + 1, 0, true)).ToList();
+            data = new List<QueueItem>(count);
         }
 
-        public PriorityQueue(long[] dist)
+        public PriorityQueue(Vertex[] vertices)
         {
-            data = dist.Select((x, i) => new QueueItem(i + 1, x, true)).ToList();
-            for (int i = (data.Count - 1) / 2; i >= 0; i--)
+            data = new List<QueueItem>(vertices.Length);
+            for (int i = 0; i < vertices.Length; i++)
             {
-                SiftDown(i);
+                data.Add(new QueueItem(i + 1, 0));
             }
         }
 
@@ -151,10 +149,9 @@ namespace _5_travelling_salesman_problem
             return result;
         }
 
-        public void ChangePriority(QueueItem current, int item, long priority)
+        public void SetPriority(int item, long priority)
         {
-            current.Active = false;
-            data.Add(new QueueItem(item, priority, true));
+            data.Add(new QueueItem(item, priority));
             SiftUp(data.Count - 1);
         }
 
@@ -172,11 +169,19 @@ namespace _5_travelling_salesman_problem
     public static class TravellingSalesmanProblem
     {
         private static Vertex[] Vertices;
+        private static long[] dist;
+        private static long[] distR;
+        private static bool[] proc;
+        private static bool[] procR;
+        private static int[] hops;
+        private static PriorityQueue queue;
+        private static PriorityQueue queueR;
+        private static List<Edge> shortcuts;
 
         private static Edge[] WitnessSearch(int nindex)
         {
-            var shortcuts = new List<Edge>(10000);
-            var maxL = 0;
+            shortcuts.Clear();
+            long maxL = 0;
             foreach (var pred in Vertices[nindex].Predecessors)
             {
                 foreach (var succ in Vertices[nindex].Edges)
@@ -189,14 +194,14 @@ namespace _5_travelling_salesman_problem
             {
                 if (Vertices[pred.Source].Contracted) continue;
                 // witness dijkstra
-                var dist = new long[Vertices.Length];
-                var hops = new int[Vertices.Length];
                 for (int i = 0; i < Vertices.Length; i++)
                 {
                     dist[i] = long.MaxValue;
+                    hops[i] = 0;
                 }
                 dist[pred.Source] = 0;
-                var queue = new PriorityQueue(dist.Skip(1).ToArray());
+                queue.Clear();
+                queue.SetPriority(pred.Source, 0);
                 while (!queue.Empty())
                 {
                     var u = queue.ExtractMin();
@@ -208,7 +213,7 @@ namespace _5_travelling_salesman_problem
                         {
                             dist[v.Destination] = dist[u.Index] + v.Weight;
                             hops[v.Destination] = hops[u.Index] + 1;
-                            queue.ChangePriority(u, v.Destination, dist[v.Destination]);
+                            queue.SetPriority(v.Destination, dist[v.Destination]);
                             if (dist[v.Destination] > maxL || hops[v.Destination] > 10)
                             {
                                 queue.Clear();
@@ -254,6 +259,15 @@ namespace _5_travelling_salesman_problem
             {
                 Vertices[i] = new Vertex();
             }
+            dist = new long[Vertices.Length];
+            distR = new long[Vertices.Length];
+            proc = new bool[Vertices.Length];
+            procR = new bool[Vertices.Length];
+            queue = new PriorityQueue(vertexCount);
+            queueR = new PriorityQueue(vertexCount);
+            hops = new int[Vertices.Length];
+            shortcuts = new List<Edge>(1000);
+
             for (int i = 0; i < graph.Length; i++)
             {
                 var e = graph[i].AsIntArray();
@@ -295,13 +309,13 @@ namespace _5_travelling_salesman_problem
                 }
                 else
                 {
-                    importanceQueue.ChangePriority(node, node.Index, Vertices[node.Index].Importance);
+                    importanceQueue.SetPriority(node.Index, Vertices[node.Index].Importance);
                     continue;
                 }
             }
         }
 
-        private static bool Process(QueueItem q, PriorityQueue queue, long[] dist, bool[] proc, bool forward)
+        private static void Process(QueueItem q, PriorityQueue queue, long[] dist, bool[] proc, bool forward)
         {
             if (dist[q.Index] < long.MaxValue && !proc[q.Index])
             {
@@ -310,44 +324,39 @@ namespace _5_travelling_salesman_problem
                     if (dist[edge.Destination] > dist[q.Index] + edge.Weight)
                     {
                         dist[edge.Destination] = dist[q.Index] + edge.Weight;
-                        queue.ChangePriority(q, edge.Destination, dist[edge.Destination]);
+                        queue.SetPriority(edge.Destination, dist[edge.Destination]);
                     }
                 }
                 proc[q.Index] = true;
-                return true;
             }
-            return false;
         }
 
         private static long GetDistance(int a, int b)
         {
             // bidirectional upward Dijkstra
             var estimate = long.MaxValue;
-            var dist = new long[Vertices.Length];
-            var distR = new long[Vertices.Length];
-            var proc = new bool[Vertices.Length];
-            var procR = new bool[Vertices.Length];
             for (int i = 0; i < Vertices.Length; i++)
             {
                 dist[i] = distR[i] = long.MaxValue;
+                proc[i] = procR[i] = false;
             }
             dist[a] = distR[b] = 0;
 
-            var queue = new PriorityQueue(dist.Skip(1).ToArray());
-            var queueR = new PriorityQueue(distR.Skip(1).ToArray());
+            queue.Clear();
+            queue.SetPriority(a, 0);
+            queueR.Clear();
+            queueR.SetPriority(b, 0);
 
-            while (!queue.Empty() && !queueR.Empty())
+            while (!queue.Empty() || !queueR.Empty())
             {
                 if (!queue.Empty())
                 {
                     var q = queue.ExtractMin();
                     if (dist[q.Index] <= estimate)
                     {
-                        if (Process(q, queue, dist, proc, true))
-                        {
-                            if (procR[q.Index] && dist[q.Index] + distR[q.Index] < estimate)
-                                estimate = dist[q.Index] + distR[q.Index];
-                        }
+                        Process(q, queue, dist, proc, true);
+                        if (procR[q.Index] && dist[q.Index] + distR[q.Index] < estimate)
+                            estimate = dist[q.Index] + distR[q.Index];
                     }
                 }
                 if (!queueR.Empty())
@@ -355,15 +364,30 @@ namespace _5_travelling_salesman_problem
                     var q = queueR.ExtractMin();
                     if (distR[q.Index] <= estimate)
                     {
-                        if (Process(q, queueR, distR, procR, false))
-                        {
-                            if (proc[q.Index] && dist[q.Index] + distR[q.Index] < estimate)
-                                estimate = dist[q.Index] + distR[q.Index];
-                        }
+                        Process(q, queueR, distR, procR, false);
+                        if (proc[q.Index] && dist[q.Index] + distR[q.Index] < estimate)
+                            estimate = dist[q.Index] + distR[q.Index];
                     }
                 }
             }
             return estimate < long.MaxValue ? estimate : -1;
+        }
+
+        private static long TSP(long[,] dist, long[,] dp, int subset, int position)
+        {
+            var length = dist.GetUpperBound(0) + 1;
+            if (subset == (1 << length) - 1) return dist[position, 0];
+            if (dp[subset, position] != -1) return dp[subset, position];
+            var answer = long.MaxValue;
+            for (int city = 0; city < length; city++)
+            {
+                if ((subset & (1 << city)) == 0)
+                {
+                    var newAnswer = dist[position, city] + TSP(dist, dp, subset | (1 << city), city);
+                    if (newAnswer < answer) answer = newAnswer;
+                }
+            }
+            return dp[subset, position] = answer;
         }
 
         public static string[] ProcessQueries(string[] queries)
@@ -372,19 +396,43 @@ namespace _5_travelling_salesman_problem
             for (int k = 0; k < queries.Length; k++)
             {
                 var query = queries[k].AsIntArray().Skip(1).ToArray();
-                var matrix = new long[query.Length + 1, query.Length + 1];
+                var matrix = new long[query.Length, query.Length];
 
                 //fill the matrix
-                for (int i = 1; i <= query.Length; i++)
+                bool noSolution = false;
+                for (int i = 0; i < query.Length; i++)
                 {
-                    for (int j = 1; j <= query.Length; j++)
+                    for (int j = 0; j < query.Length; j++)
                     {
-                        matrix[i, j] = i == j ? 0 : GetDistance(query[i], query[j]);
+                        if (i != j)
+                        {
+                            matrix[i, j] = GetDistance(query[i], query[j]);
+                            if (matrix[i, j] < 0)
+                            {
+                                noSolution = true;
+                                break;
+                            }
+                        }
                     }
+                    if (noSolution) break;
+                }
+
+                if (noSolution)
+                {
+                    result[k] = "-1";
+                    continue;
                 }
 
                 //mincost
-
+                var DP = new long[1 << query.Length, query.Length];
+                for (int i = 0; i < (1 << query.Length); i++)
+                {
+                    for (int j = 0; j < query.Length; j++)
+                    {
+                        DP[i, j] = -1;
+                    }
+                }
+                result[k] = TSP(matrix, DP, 1, 0).ToString();
             }
             return result;
         }

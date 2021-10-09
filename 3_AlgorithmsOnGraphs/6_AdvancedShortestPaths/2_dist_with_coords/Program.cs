@@ -43,13 +43,11 @@ namespace _2_dist_with_coords
     {
         public readonly int Index;
         public readonly double Value;
-        public bool Active;
 
-        public QueueItem(int index, double value, bool active)
+        public QueueItem(int index, double value)
         {
             Index = index;
             Value = value;
-            Active = active;
         }
     }
 
@@ -70,7 +68,7 @@ namespace _2_dist_with_coords
             {
                 index = nextI;
                 var p = (index - 1) / 2;
-                if (!data[p].Active || (p >= 0 && (data[index].Value < data[p].Value)))
+                if (p >= 0 && (data[index].Value < data[p].Value))
                 {
                     nextI = p;
                     Swap(index, nextI);
@@ -98,13 +96,14 @@ namespace _2_dist_with_coords
             }
         }
 
-        public PriorityQueue(double[] dist)
+        public PriorityQueue(int count)
         {
-            data = dist.Select((x, i) => new QueueItem(i + 1, x, true)).ToList();
-            for (int i = (data.Count - 1) / 2; i >= 0; i--)
-            {
-                SiftDown(i);
-            }
+            data = new List<QueueItem>(count);
+        }
+
+        public void Clear()
+        {
+            data.Clear();
         }
 
         public QueueItem ExtractMin()
@@ -116,10 +115,9 @@ namespace _2_dist_with_coords
             return result;
         }
 
-        public void ChangePriority(QueueItem current, int item, double priority)
+        public void SetPriority(int item, double priority)
         {
-            current.Active = false;
-            data.Add(new QueueItem(item, priority, true));
+            data.Add(new QueueItem(item, priority));
             SiftUp(data.Count - 1);
         }
 
@@ -139,6 +137,17 @@ namespace _2_dist_with_coords
 
     public static class DistWithCoords
     {
+        private static long[] dist;
+        private static long[] distR;
+        private static bool[] proc;
+        private static bool[] procR;
+        private static double[] distPi;
+        private static double[] distPiR;
+        private static PriorityQueue queue;
+        private static PriorityQueue queueR;
+        private static Dictionary<int, long[]> visitedNodes;
+        private static Vertex[] vertices;
+
         private static double Distance(Vertex u, Vertex v)
         {
             return Math.Sqrt(Math.Pow(u.X - v.X, 2) + Math.Pow(u.Y - v.Y, 2));
@@ -149,7 +158,7 @@ namespace _2_dist_with_coords
             return (Distance(target, u) - Distance(u, start)) / 2;
         }
 
-        private static bool Process(QueueItem q, Vertex[] vertices, PriorityQueue queue, int start, int target, long[] dist, double[] distPi, int[] prev, bool[] proc, bool forward)
+        private static void Process(QueueItem q, PriorityQueue queue, int start, int target, long[] dist, double[] distPi, bool[] proc, bool forward)
         {
             if (dist[q.Index] < long.MaxValue && !proc[q.Index])
             {
@@ -163,77 +172,78 @@ namespace _2_dist_with_coords
                     {
                         dist[e.Destination] = dist[q.Index] + e.Weight;
                         distPi[e.Destination] = distPi[q.Index] + lpi;
-                        prev[e.Destination] = q.Index;
-                        queue.ChangePriority(q, e.Destination, distPi[e.Destination]);
+                        queue.SetPriority(e.Destination, distPi[e.Destination]);
+
+                        if (!visitedNodes.ContainsKey(e.Destination))
+                        {
+                            visitedNodes.Add(e.Destination, new long[2] { forward ? dist[e.Destination] : long.MaxValue, forward ? long.MaxValue : dist[e.Destination] });
+                        }
+                        else
+                        {
+                            visitedNodes[e.Destination][forward ? 0 : 1] = dist[e.Destination];
+                        }
                     }
                     listItem = listItem.Next;
                 }
-
                 proc[q.Index] = true;
-                return true;
             }
-            return false;
         }
 
-        private static long ShortestPath(long[] dist, bool[] proc, long[] distR, bool[] procR)
+        private static long ShortestPath()
         {
             var distance = long.MaxValue;
-            for (int i = 0; i < proc.Length; i++)
+            foreach (var value in visitedNodes.Values)
             {
-                if (proc[i] || procR[i])
+                if (value[0] < long.MaxValue && value[1] < long.MaxValue)
                 {
-                    if (dist[i] + distR[i] >= 0 && dist[i] + distR[i] < distance)
-                    {
-                        distance = dist[i] + distR[i];
-                    }
+                    if (value[0] + value[1] < distance)
+                        distance = value[0] + value[1];
                 }
             }
             return distance;
         }
 
-        private static long BidirectionalAStar(Vertex[] vertices, int start, int end)
+        private static long BidirectionalAStar(int start, int end)
         {
-            var dist = new long[vertices.Length];
-            var prev = new int[vertices.Length];
-            var distR = new long[vertices.Length];
-            var prevR = new int[vertices.Length];
-            var proc = new bool[vertices.Length];
-            var procR = new bool[vertices.Length];
-            var distPi = new double[vertices.Length];
-            var distPiR = new double[vertices.Length];
-
             for (int i = 0; i < dist.Length; i++)
             {
                 dist[i] = distR[i] = long.MaxValue;
                 distPi[i] = distPiR[i] = double.MaxValue;
-                prev[i] = prevR[i] = -1;
+                proc[i] = procR[i] = false;
             }
             dist[start] = 0;
             distPi[start] = 0;
             distR[end] = 0;
             distPiR[end] = 0;
             if (start == end) return 0;
+            visitedNodes.Clear();
+            visitedNodes.Add(start, new long[2] { 0, long.MaxValue });
+            visitedNodes.Add(end, new long[2] { long.MaxValue, 0 });
 
-            var queue = new PriorityQueue(distPi.Skip(1).ToArray());
-            var queueR = new PriorityQueue(distPiR.Skip(1).ToArray());
+            queue.Clear();
+            queue.SetPriority(start, 0);
+            queueR.Clear();
+            queueR.SetPriority(end, 0);
 
-            while (!queue.Empty() && !queueR.Empty())
+            while (!queue.Empty() || !queueR.Empty())
             {
                 if (!queue.Empty())
                 {
                     var q = queue.ExtractMin();
-                    if (Process(q, vertices, queue, start, end, dist, distPi, prev, proc, true) && procR[q.Index])
+                    Process(q, queue, start, end, dist, distPi, proc, true);
+                    if (procR[q.Index])
                     {
-                        return ShortestPath(dist, proc, distR, procR);
+                        return ShortestPath();
                     }
                 }
 
                 if (!queueR.Empty())
                 {
                     var q = queueR.ExtractMin();
-                    if (Process(q, vertices, queueR, end, start, distR, distPiR, prevR, procR, false) && proc[q.Index])
+                    Process(q, queueR, end, start, distR, distPiR, procR, false);
+                    if (proc[q.Index])
                     {
-                        return ShortestPath(dist, proc, distR, procR);
+                        return ShortestPath();
                     }
                 }
             }
@@ -243,7 +253,7 @@ namespace _2_dist_with_coords
         public static string[] Solve(string[] vertexData, string[] edgeData, string[] queryData)
         {
             //graph init
-            var vertices = new Vertex[vertexData.Length + 1];
+            vertices = new Vertex[vertexData.Length + 1];
             for (int i = 1; i <= vertexData.Length; i++)
             {
                 var v = vertexData[i - 1].AsIntArray();
@@ -255,12 +265,23 @@ namespace _2_dist_with_coords
                 vertices[e[0]].AddEdge(e[1], e[2]);
                 vertices[e[1]].AddEdgeR(e[0], e[2]);
             }
+
+            dist = new long[vertices.Length];
+            distR = new long[vertices.Length];
+            proc = new bool[vertices.Length];
+            procR = new bool[vertices.Length];
+            distPi = new double[vertices.Length];
+            distPiR = new double[vertices.Length];
+            queue = new PriorityQueue(vertexData.Length);
+            queueR = new PriorityQueue(vertexData.Length);
+            visitedNodes = new Dictionary<int, long[]>();
+
             //queries
             var result = new string[queryData.Length];
             for (int i = 0; i < queryData.Length; i++)
             {
                 var q = queryData[i].AsIntArray();
-                result[i] = BidirectionalAStar(vertices, q[0], q[1]).ToString();
+                result[i] = BidirectionalAStar(q[0], q[1]).ToString();
             }
             return result;
         }

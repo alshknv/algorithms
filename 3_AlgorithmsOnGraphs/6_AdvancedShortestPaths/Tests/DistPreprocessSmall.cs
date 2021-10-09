@@ -45,6 +45,34 @@ namespace Tests
         }
 
         [Fact]
+        public void Loop()
+        {
+            DistPreprocessSmall.Preprocess(3,
+                new string[] { "1 2 1", "2 3 2", "3 1 3" });
+            Assert.Collection(DistPreprocessSmall.ProcessQueries(new string[] { "1 2", "2 3", "3 1", "1 3", "2 1", "3 2" }),
+                l1 => Assert.Equal("1", l1),
+                l2 => Assert.Equal("2", l2),
+                l3 => Assert.Equal("3", l3),
+                l4 => Assert.Equal("3", l4),
+                l5 => Assert.Equal("5", l5),
+                l6 => Assert.Equal("4", l6));
+        }
+
+        [Fact]
+        public void MultiEdge()
+        {
+            DistPreprocessSmall.Preprocess(3,
+                new string[] { "1 2 1", "2 3 2", "3 1 3", "2 3 1" });
+            Assert.Collection(DistPreprocessSmall.ProcessQueries(new string[] { "1 2", "2 3", "3 1", "1 3", "2 1", "3 2" }),
+                l1 => Assert.Equal("1", l1),
+                l2 => Assert.Equal("1", l2),
+                l3 => Assert.Equal("3", l3),
+                l4 => Assert.Equal("2", l4),
+                l5 => Assert.Equal("4", l5),
+                l6 => Assert.Equal("4", l6));
+        }
+
+        [Fact]
         public void FileTest01()
         {
             const string tf = "../../../tests134/01";
