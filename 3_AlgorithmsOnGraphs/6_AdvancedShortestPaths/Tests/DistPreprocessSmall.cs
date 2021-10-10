@@ -1,7 +1,9 @@
+using System;
 using System.IO;
 using System.Linq;
 using _3_dist_preprocess_small;
 using Xunit;
+using _1_friend_suggestion;
 
 namespace Tests
 {
@@ -9,7 +11,7 @@ namespace Tests
     {
         private string[] SolveFromFile(string[] lines)
         {
-            var nm = lines[0].AsIntArray();
+            var nm = _3_dist_preprocess_small.Extensions.AsIntArray(lines[0]);
             var edges = new string[nm[1]];
             for (int i = 0; i < nm[1]; i++)
             {
@@ -73,6 +75,20 @@ namespace Tests
         }
 
         [Fact]
+        public void SelfLoop()
+        {
+            DistPreprocessSmall.Preprocess(3,
+                new string[] { "1 2 1", "2 3 2", "3 1 3", "2 3 1", "1 1 1" });
+            Assert.Collection(DistPreprocessSmall.ProcessQueries(new string[] { "1 2", "2 3", "3 1", "1 3", "2 1", "3 2" }),
+                l1 => Assert.Equal("1", l1),
+                l2 => Assert.Equal("1", l2),
+                l3 => Assert.Equal("3", l3),
+                l4 => Assert.Equal("2", l4),
+                l5 => Assert.Equal("4", l5),
+                l6 => Assert.Equal("4", l6));
+        }
+
+        [Fact]
         public void FileTest01()
         {
             const string tf = "../../../tests134/01";
@@ -97,6 +113,28 @@ namespace Tests
             var lines = File.ReadAllLines(tf);
             var answer = File.ReadAllLines($"{tf}.a").Select(x => x.TrimEnd()).ToArray();
             Assert.Equal(answer, SolveFromFile(lines));
+        }
+
+        [Fact]
+        public void AgainstDijkstra()
+        {
+            const string tf = "../../../tests134/03";
+            var lines = File.ReadAllLines(tf);
+            var nm = _3_dist_preprocess_small.Extensions.AsIntArray(lines[0]);
+            var edges = new string[nm[1]];
+            for (int i = 0; i < nm[1]; i++)
+            {
+                edges[i] = lines[i + 1];
+            }
+            DistPreprocessSmall.Preprocess(nm[0], edges);
+            var rnd = new Random();
+            var queries = new string[1000];
+            for (int i = 0; i < queries.Length; i++)
+            {
+                queries[i] = $"{rnd.Next(nm[0] * 100) % nm[0] + 1} {rnd.Next(nm[0] * 100) % nm[0] + 1}";
+            }
+            Assert.Equal(FriendSuggestion.Solve(nm[0], edges, queries),
+            DistPreprocessSmall.ProcessQueries(queries));
         }
     }
 }

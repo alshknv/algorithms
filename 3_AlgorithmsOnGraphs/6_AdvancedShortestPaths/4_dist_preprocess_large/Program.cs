@@ -43,8 +43,8 @@ namespace _4_dist_preprocess_large
         }
         public Vertex()
         {
-            Edges = new List<Edge>(100000);
-            Predecessors = new List<Edge>(100000);
+            Edges = new List<Edge>(100);
+            Predecessors = new List<Edge>(100);
         }
         public void AddEdge(int source, int destination, int weight)
         {
@@ -206,19 +206,15 @@ namespace _4_dist_preprocess_large
                 {
                     var u = queue.ExtractMin();
                     if (dist[u.Index] == long.MaxValue) continue;
+                    if (dist[u.Index] > maxL || hops[u.Index] > 5) break;
                     foreach (var v in Vertices[u.Index].Edges)
                     {
-                        if (v.Destination == nindex) continue;
+                        if (v.Destination == nindex || Vertices[v.Destination].Contracted) continue;
                         if (dist[v.Destination] > dist[u.Index] + v.Weight)
                         {
                             dist[v.Destination] = dist[u.Index] + v.Weight;
                             hops[v.Destination] = hops[u.Index] + 1;
                             queue.SetPriority(v.Destination, dist[v.Destination]);
-                            if (dist[v.Destination] > maxL || hops[v.Destination] > 10)
-                            {
-                                queue.Clear();
-                                break;
-                            }
                         }
                     }
                 }
@@ -266,13 +262,16 @@ namespace _4_dist_preprocess_large
             queue = new PriorityQueue(vertexCount);
             queueR = new PriorityQueue(vertexCount);
             hops = new int[Vertices.Length];
-            shortcuts = new List<Edge>(1000);
+            shortcuts = new List<Edge>(50);
 
             for (int i = 0; i < graph.Length; i++)
             {
                 var e = graph[i].AsIntArray();
-                Vertices[e[0]].AddEdge(e[0], e[1], e[2]);
-                Vertices[e[1]].AddPredecessor(e[0], e[1], e[2]);
+                if (e[0] != e[1])
+                {
+                    Vertices[e[0]].AddEdge(e[0], e[1], e[2]);
+                    Vertices[e[1]].AddPredecessor(e[0], e[1], e[2]);
+                }
             }
             var importanceQueue = new PriorityQueue(Vertices.Skip(1).ToArray());
             var contractOrder = 0;
