@@ -18,20 +18,20 @@ namespace _1_friend_suggestion
 
     public class Vertex
     {
-        public readonly LinkedList<Edge> Edges;
-        public readonly LinkedList<Edge> EdgesR;
+        public readonly List<Edge> Edges;
+        public readonly List<Edge> EdgesR;
         public Vertex()
         {
-            Edges = new LinkedList<Edge>();
-            EdgesR = new LinkedList<Edge>();
+            Edges = new List<Edge>(100);
+            EdgesR = new List<Edge>(100);
         }
         public void AddEdge(int destination, int weight)
         {
-            Edges.AddLast(new Edge(destination, weight));
+            Edges.Add(new Edge(destination, weight));
         }
         public void AddEdgeR(int destination, int weight)
         {
-            EdgesR.AddLast(new Edge(destination, weight));
+            EdgesR.Add(new Edge(destination, weight));
         }
     }
 
@@ -147,10 +147,8 @@ namespace _1_friend_suggestion
         {
             if (dist[q.Index] < long.MaxValue && !proc[q.Index])
             {
-                var listItem = forward ? vertices[q.Index].Edges.First : vertices[q.Index].EdgesR.First;
-                while (listItem != null)
+                foreach (var e in forward ? vertices[q.Index].Edges : vertices[q.Index].EdgesR)
                 {
-                    var e = listItem.Value;
                     if (dist[e.Destination] > dist[q.Index] + e.Weight)
                     {
                         dist[e.Destination] = dist[q.Index] + e.Weight;
@@ -165,7 +163,6 @@ namespace _1_friend_suggestion
                             visitedNodes[e.Destination][forward ? 0 : 1] = dist[e.Destination];
                         }
                     }
-                    listItem = listItem.Next;
                 }
                 proc[q.Index] = true;
             }

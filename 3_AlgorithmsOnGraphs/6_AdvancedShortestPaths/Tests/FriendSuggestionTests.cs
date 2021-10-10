@@ -1,3 +1,5 @@
+using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using _1_friend_suggestion;
@@ -23,14 +25,14 @@ namespace Tests
             }
             return FriendSuggestion.Solve(nm[0], edges, queries);
         }
-        
+
         [Fact]
         public void Example1()
         {
             Assert.Collection(FriendSuggestion.Solve(4, new string[] { "1 2 1", "4 1 2", "2 3 2", "1 3 5" }, new string[] { "1 3" }),
-                l1=>Assert.Equal("3",l1));
+                l1 => Assert.Equal("3", l1));
         }
-        
+
         [Fact]
         public void FileTest01()
         {
@@ -56,13 +58,6 @@ namespace Tests
             var lines = File.ReadAllLines(tf);
             var answer = File.ReadAllLines($"{tf}.a").Select(x => x.TrimEnd()).ToArray();
             var result = SolveFromFile(lines);
-            for (int i = 0; i < answer.Length; i++)
-            {
-                if (answer[i] != result[i])
-                {
-
-                }
-            }
             Assert.Equal(answer, result);
         }
     }

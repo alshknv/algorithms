@@ -118,7 +118,7 @@ namespace Tests
         [Fact]
         public void AgainstDijkstra()
         {
-            const string tf = "../../../tests134/03";
+            const string tf = "../../../tests134/ny";
             var lines = File.ReadAllLines(tf);
             var nm = _3_dist_preprocess_small.Extensions.AsIntArray(lines[0]);
             var edges = new string[nm[1]];
@@ -128,7 +128,7 @@ namespace Tests
             }
             DistPreprocessSmall.Preprocess(nm[0], edges);
             var rnd = new Random();
-            var queries = new string[1000];
+            var queries = new string[10];
             for (int i = 0; i < queries.Length; i++)
             {
                 queries[i] = $"{rnd.Next(nm[0] * 100) % nm[0] + 1} {rnd.Next(nm[0] * 100) % nm[0] + 1}";
