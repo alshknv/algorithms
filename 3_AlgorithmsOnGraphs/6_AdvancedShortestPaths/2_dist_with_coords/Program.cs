@@ -19,23 +19,23 @@ namespace _2_dist_with_coords
 
     public class Vertex
     {
-        public readonly LinkedList<Edge> Edges;
-        public readonly LinkedList<Edge> EdgesR;
+        public readonly List<Edge> Edges;
+        public readonly List<Edge> EdgesR;
         public readonly long X;
         public readonly long Y;
         public Vertex(long x, long y)
         {
             X = x; Y = y;
-            Edges = new LinkedList<Edge>();
-            EdgesR = new LinkedList<Edge>();
+            Edges = new List<Edge>(100);
+            EdgesR = new List<Edge>(100);
         }
         public void AddEdge(int destination, int weight)
         {
-            Edges.AddLast(new Edge(destination, weight));
+            Edges.Add(new Edge(destination, weight));
         }
         public void AddEdgeR(int destination, int weight)
         {
-            EdgesR.AddLast(new Edge(destination, weight));
+            EdgesR.Add(new Edge(destination, weight));
         }
     }
 
@@ -162,10 +162,8 @@ namespace _2_dist_with_coords
         {
             if (dist[q.Index] < long.MaxValue && !proc[q.Index])
             {
-                var listItem = forward ? vertices[q.Index].Edges.First : vertices[q.Index].EdgesR.First;
-                while (listItem != null)
+                foreach (var e in forward ? vertices[q.Index].Edges : vertices[q.Index].EdgesR)
                 {
-                    var e = listItem.Value;
                     var lpi = e.Weight - Pi(vertices[target], vertices[start], vertices[q.Index])
                             + Pi(vertices[target], vertices[start], vertices[e.Destination]);
                     if (distPi[e.Destination] > distPi[q.Index] + lpi)
@@ -183,7 +181,6 @@ namespace _2_dist_with_coords
                             visitedNodes[e.Destination][forward ? 0 : 1] = dist[e.Destination];
                         }
                     }
-                    listItem = listItem.Next;
                 }
                 proc[q.Index] = true;
             }
