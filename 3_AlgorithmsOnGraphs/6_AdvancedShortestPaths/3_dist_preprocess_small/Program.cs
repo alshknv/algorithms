@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -35,10 +34,10 @@ namespace _3_dist_preprocess_small
         public int Order;
         public int Level;
         public int ContractedNeighbors;
-        public int EdgeDifference;
+        public long EdgeDifference;
         public int ShortcutCover;
         public bool Contracted;
-        public int Importance
+        public long Importance
         {
             get { return EdgeDifference + ShortcutCover + ContractedNeighbors + Level; }
         }
@@ -225,10 +224,9 @@ namespace _3_dist_preprocess_small
                     {
                         //planning shortcut
                         var key = $"{pred.Source}-{succ.Destination}";
-                        var edge = new Edge(pred.Source, succ.Destination, pred.Weight + succ.Weight);
                         if (!shortcuts.ContainsKey(key))
                         {
-                            shortcuts.Add(key, edge);
+                            shortcuts.Add(key, new Edge(pred.Source, succ.Destination, pred.Weight + succ.Weight));
                         }
                         else if (pred.Weight + succ.Weight < shortcuts[key].Weight)
                         {
@@ -298,12 +296,11 @@ namespace _3_dist_preprocess_small
             while (!importanceQueue.Empty())
             {
                 var node = importanceQueue.ExtractMin();
-                WitnessSearch(node.Index);
-                Vertices[node.Index].EdgeDifference = shortcuts.Count - Vertices[node.Index].Predecessors.Count - Vertices[node.Index].Edges.Count;
-                Vertices[node.Index].ShortcutCover = shortcuts.Count;
+                Vertices[node.Index].EdgeDifference = Vertices[node.Index].Predecessors.Count * Vertices[node.Index].Edges.Count;
                 var nextMin = importanceQueue.GetMin();
                 if (nextMin == null || Vertices[node.Index].Importance <= Vertices[nextMin.Index].Importance)
                 {
+                    WitnessSearch(node.Index);
                     // contract the least important node
                     Vertices[node.Index].Contracted = true;
                     Vertices[node.Index].Order = contractOrder++;
