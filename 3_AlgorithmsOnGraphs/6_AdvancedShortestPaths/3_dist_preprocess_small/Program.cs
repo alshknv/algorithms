@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Diagnostics;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -176,29 +177,26 @@ namespace _3_dist_preprocess_small
         private static int[] hops;
         private static PriorityQueue queue;
         private static PriorityQueue queueR;
-        private static List<Edge> shortcuts;
+        private static Dictionary<Edge, int> shortcuts;
 
-        private static Edge[] WitnessSearch(int nindex)
+        private static void WitnessSearch(int nindex)
         {
             shortcuts.Clear();
             long maxL = 0;
             foreach (var pred in Vertices[nindex].Predecessors)
             {
+                if (Vertices[pred.Source].Contracted) continue;
                 foreach (var succ in Vertices[nindex].Edges)
                 {
+                    if (Vertices[succ.Destination].Contracted) continue;
                     if (pred.Weight + succ.Weight > maxL) maxL = pred.Weight + succ.Weight;
                 }
             }
-
+            var changedDistances = new List<int>(100);
             foreach (var pred in Vertices[nindex].Predecessors)
             {
                 if (Vertices[pred.Source].Contracted) continue;
                 // witness dijkstra
-                for (int i = 0; i < Vertices.Length; i++)
-                {
-                    dist[i] = long.MaxValue;
-                    hops[i] = 0;
-                }
                 dist[pred.Source] = 0;
                 queue.Clear();
                 queue.SetPriority(pred.Source, 0);
@@ -215,6 +213,7 @@ namespace _3_dist_preprocess_small
                             dist[v.Destination] = dist[u.Index] + v.Weight;
                             hops[v.Destination] = hops[u.Index] + 1;
                             queue.SetPriority(v.Destination, dist[v.Destination]);
+                            changedDistances.Add(v.Destination);
                         }
                     }
                 }
@@ -224,12 +223,21 @@ namespace _3_dist_preprocess_small
                     if (dist[succ.Destination] > pred.Weight + succ.Weight && !Vertices[succ.Destination].Contracted)
                     {
                         //planning shortcut
-                        shortcuts.Add(new Edge(pred.Source, succ.Destination, pred.Weight + succ.Weight));
+                        var key = new Edge(pred.Source, succ.Destination, 0);
+                        if (!shortcuts.ContainsKey(key))
+                        {
+                            shortcuts.Add(key, pred.Weight + succ.Weight);
+                        }
+                        else if (pred.Weight + succ.Weight < shortcuts[key])
+                        {
+                            shortcuts[key] = pred.Weight + succ.Weight;
+                        }
                     }
                 }
-            }
 
-            return shortcuts.ToArray();
+                foreach (var i in changedDistances) dist[i] = long.MaxValue;
+                dist[pred.Source] = long.MaxValue;
+            }
         }
 
         private static void UpdateNeighborImportance(Vertex v)
@@ -262,7 +270,7 @@ namespace _3_dist_preprocess_small
             queue = new PriorityQueue(vertexCount);
             queueR = new PriorityQueue(vertexCount);
             hops = new int[Vertices.Length];
-            shortcuts = new List<Edge>(50);
+            shortcuts = new Dictionary<Edge, int>(50);
 
             for (int i = 0; i < graph.Length; i++)
             {
@@ -273,14 +281,18 @@ namespace _3_dist_preprocess_small
                     Vertices[e[1]].AddPredecessor(e[0], e[1], e[2]);
                 }
             }
+            for (int i = 0; i < Vertices.Length; i++)
+            {
+                dist[i] = distR[i] = long.MaxValue;
+            }
             var importanceQueue = new PriorityQueue(Vertices.Skip(1).ToArray());
             var contractOrder = 0;
             while (!importanceQueue.Empty())
             {
                 var node = importanceQueue.ExtractMin();
-                var shortcuts = WitnessSearch(node.Index);
-                Vertices[node.Index].EdgeDifference = shortcuts.Length - Vertices[node.Index].Predecessors.Count - Vertices[node.Index].Edges.Count;
-                Vertices[node.Index].ShortcutCover = shortcuts.Length;
+                WitnessSearch(node.Index);
+                Vertices[node.Index].EdgeDifference = shortcuts.Count - Vertices[node.Index].Predecessors.Count - Vertices[node.Index].Edges.Count;
+                Vertices[node.Index].ShortcutCover = shortcuts.Count;
                 var nextMin = importanceQueue.GetMin();
                 if (nextMin == null || Vertices[node.Index].Importance <= Vertices[nextMin.Index].Importance)
                 {
@@ -300,10 +312,10 @@ namespace _3_dist_preprocess_small
                         .RemoveAll(e => Vertices[e.Destination].Contracted && Vertices[e.Destination].Order < Vertices[node.Index].Order);
 
                     // adding shortcut
-                    foreach (var shortcut in shortcuts)
+                    foreach (var shortcut in shortcuts.Keys)
                     {
-                        Vertices[shortcut.Source].AddEdge(shortcut);
-                        Vertices[shortcut.Destination].AddPredecessor(shortcut);
+                        Vertices[shortcut.Source].AddEdge(new Edge(shortcut.Source, shortcut.Destination, shortcuts[shortcut]));
+                        Vertices[shortcut.Destination].AddPredecessor(new Edge(shortcut.Source, shortcut.Destination, shortcuts[shortcut]));
                     }
                 }
                 else
