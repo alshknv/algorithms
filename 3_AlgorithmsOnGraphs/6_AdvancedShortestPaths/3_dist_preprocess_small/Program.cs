@@ -235,7 +235,11 @@ namespace _3_dist_preprocess_small
                     }
                 }
 
-                foreach (var i in changedDistances) dist[i] = long.MaxValue;
+                foreach (var i in changedDistances)
+                {
+                    dist[i] = long.MaxValue;
+                    hops[i] = 0;
+                }
                 dist[pred.Source] = long.MaxValue;
             }
         }
@@ -283,7 +287,8 @@ namespace _3_dist_preprocess_small
             }
             for (int i = 0; i < Vertices.Length; i++)
             {
-                dist[i] = distR[i] = long.MaxValue;
+                dist[i] = long.MaxValue;
+                hops[i] = 0;
             }
             var importanceQueue = new PriorityQueue(Vertices.Skip(1).ToArray());
             var contractOrder = 0;
