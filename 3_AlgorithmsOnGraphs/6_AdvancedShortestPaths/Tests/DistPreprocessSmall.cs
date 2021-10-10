@@ -119,7 +119,7 @@ namespace Tests
         [Fact]
         public void AgainstDijkstra()
         {
-            const string tf = "../../../tests134/ny";
+            const string tf = "../../../tests134/03";
             var lines = File.ReadAllLines(tf);
             var nm = _3_dist_preprocess_small.Extensions.AsIntArray(lines[0]);
             var edges = new string[nm[1]];

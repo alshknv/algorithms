@@ -34,17 +34,17 @@ namespace _4_dist_preprocess_large
         public int Order;
         public int Level;
         public int ContractedNeighbors;
-        public int EdgeDifference;
+        public long EdgeDifference;
         public int ShortcutCover;
         public bool Contracted;
-        public int Importance
+        public long Importance
         {
             get { return EdgeDifference + ShortcutCover + ContractedNeighbors + Level; }
         }
-        public Vertex()
+        public Vertex(int count)
         {
-            Edges = new List<Edge>(100);
-            Predecessors = new List<Edge>(100);
+            Edges = new List<Edge>(count);
+            Predecessors = new List<Edge>(count);
         }
         public void AddEdge(int source, int destination, int weight)
         {
@@ -265,7 +265,7 @@ namespace _4_dist_preprocess_large
             Vertices = new Vertex[vertexCount + 1];
             for (int i = 1; i < Vertices.Length; i++)
             {
-                Vertices[i] = new Vertex();
+                Vertices[i] = new Vertex(50);
             }
             dist = new long[Vertices.Length];
             distR = new long[Vertices.Length];
@@ -274,8 +274,8 @@ namespace _4_dist_preprocess_large
             queue = new PriorityQueue(vertexCount);
             queueR = new PriorityQueue(vertexCount);
             hops = new int[Vertices.Length];
-            shortcuts = new Dictionary<string, Edge>(500);
-            changedDistances = new List<int>(500);
+            shortcuts = new Dictionary<string, Edge>(1000);
+            changedDistances = new List<int>(vertexCount);
 
             for (int i = 0; i < graph.Length; i++)
             {
@@ -288,7 +288,7 @@ namespace _4_dist_preprocess_large
             }
             for (int i = 0; i < Vertices.Length; i++)
             {
-                dist[i] = long.MaxValue;
+                dist[i] = distR[i] = long.MaxValue;
                 hops[i] = 0;
             }
             var importanceQueue = new PriorityQueue(Vertices.Skip(1).ToArray());
@@ -296,10 +296,11 @@ namespace _4_dist_preprocess_large
             while (!importanceQueue.Empty())
             {
                 var node = importanceQueue.ExtractMin();
+                var nextMin = importanceQueue.GetMin();
                 WitnessSearch(node.Index);
                 Vertices[node.Index].EdgeDifference = shortcuts.Count - Vertices[node.Index].Predecessors.Count - Vertices[node.Index].Edges.Count;
                 Vertices[node.Index].ShortcutCover = shortcuts.Count;
-                var nextMin = importanceQueue.GetMin();
+
                 if (nextMin == null || Vertices[node.Index].Importance <= Vertices[nextMin.Index].Importance)
                 {
                     // contract the least important node
@@ -341,6 +342,7 @@ namespace _4_dist_preprocess_large
                     if (dist[edge.Destination] > dist[q.Index] + edge.Weight)
                     {
                         dist[edge.Destination] = dist[q.Index] + edge.Weight;
+                        changedDistances.Add(edge.Destination);
                         queue.SetPriority(edge.Destination, dist[edge.Destination]);
                     }
                 }
@@ -356,11 +358,7 @@ namespace _4_dist_preprocess_large
                 var query = queries[k].AsIntArray();
                 // bidirectional upward Dijkstra
                 var estimate = long.MaxValue;
-                for (int i = 0; i < Vertices.Length; i++)
-                {
-                    dist[i] = distR[i] = long.MaxValue;
-                    proc[i] = procR[i] = false;
-                }
+                changedDistances.Clear();
                 dist[query[0]] = distR[query[1]] = 0;
 
                 queue.Clear();
@@ -391,6 +389,13 @@ namespace _4_dist_preprocess_large
                         }
                     }
                 }
+                foreach (var i in changedDistances)
+                {
+                    dist[i] = distR[i] = long.MaxValue;
+                    proc[i] = procR[i] = false;
+                }
+                dist[query[0]] = distR[query[1]] = long.MaxValue;
+                proc[query[0]] = procR[query[1]] = false;
                 result[k] = (estimate < long.MaxValue ? estimate : -1).ToString();
             }
             return result;

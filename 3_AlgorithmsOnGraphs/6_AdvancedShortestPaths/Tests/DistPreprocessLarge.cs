@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using _4_dist_preprocess_large;
@@ -69,6 +70,24 @@ namespace Tests
             var lines = File.ReadAllLines(tf);
             var answer = File.ReadAllLines($"{tf}.a").Select(x => x.TrimEnd()).ToArray();
             Assert.Equal(answer, SolveFromFile(lines));
+        }
+
+        [Fact]
+        public void LongPreprocessing()
+        {
+            const string tf = "../../../tests134/ny";
+            var lines = File.ReadAllLines(tf);
+            var nm = _3_dist_preprocess_small.Extensions.AsIntArray(lines[0]);
+            var edges = new string[nm[1]];
+            for (int i = 0; i < nm[1]; i++)
+            {
+                edges[i] = lines[i + 1];
+            }
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+            DistPreprocessLarge.Preprocess(nm[0], edges);
+            watch.Stop();
+            Assert.True(watch.ElapsedMilliseconds <= 82500);
         }
     }
 }

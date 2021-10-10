@@ -23,11 +23,11 @@ namespace _2_dist_with_coords
         public readonly List<Edge> EdgesR;
         public readonly long X;
         public readonly long Y;
-        public Vertex(long x, long y)
+        public Vertex(int count, long x, long y)
         {
             X = x; Y = y;
-            Edges = new List<Edge>(100);
-            EdgesR = new List<Edge>(100);
+            Edges = new List<Edge>(count);
+            EdgesR = new List<Edge>(count);
         }
         public void AddEdge(int destination, int weight)
         {
@@ -145,8 +145,9 @@ namespace _2_dist_with_coords
         private static double[] distPiR;
         private static PriorityQueue queue;
         private static PriorityQueue queueR;
-        private static Dictionary<int, long[]> visitedNodes;
+        private static List<int> visitedNodes;
         private static Vertex[] vertices;
+        private static long minDistance;
 
         private static double Distance(Vertex u, Vertex v)
         {
@@ -158,93 +159,96 @@ namespace _2_dist_with_coords
             return (Distance(target, u) - Distance(u, start)) / 2;
         }
 
-        private static void Process(QueueItem q, PriorityQueue queue, int start, int target, long[] dist, double[] distPi, bool[] proc, bool forward)
+        private static void ProcessFwd(int q, int start, int target)
         {
-            if (dist[q.Index] < long.MaxValue && !proc[q.Index])
+            if (!proc[q])
             {
-                foreach (var e in forward ? vertices[q.Index].Edges : vertices[q.Index].EdgesR)
+                foreach (var e in vertices[q].Edges)
                 {
-                    var lpi = e.Weight - Pi(vertices[target], vertices[start], vertices[q.Index])
+                    var lpi = e.Weight - Pi(vertices[target], vertices[start], vertices[q])
                             + Pi(vertices[target], vertices[start], vertices[e.Destination]);
-                    if (distPi[e.Destination] > distPi[q.Index] + lpi)
+                    if (distPi[e.Destination] > distPi[q] + lpi)
                     {
-                        dist[e.Destination] = dist[q.Index] + e.Weight;
-                        distPi[e.Destination] = distPi[q.Index] + lpi;
+                        dist[e.Destination] = dist[q] + e.Weight;
+                        distPi[e.Destination] = distPi[q] + lpi;
                         queue.SetPriority(e.Destination, distPi[e.Destination]);
-
-                        if (!visitedNodes.ContainsKey(e.Destination))
-                        {
-                            visitedNodes.Add(e.Destination, new long[2] { forward ? dist[e.Destination] : long.MaxValue, forward ? long.MaxValue : dist[e.Destination] });
-                        }
-                        else
-                        {
-                            visitedNodes[e.Destination][forward ? 0 : 1] = dist[e.Destination];
-                        }
+                        if (distR[e.Destination] < long.MaxValue && dist[e.Destination] + distR[e.Destination] < minDistance)
+                            minDistance = dist[e.Destination] + distR[e.Destination];
+                        visitedNodes.Add(e.Destination);
                     }
                 }
-                proc[q.Index] = true;
+                if (distR[q] < long.MaxValue && dist[q] + distR[q] < minDistance)
+                    minDistance = dist[q] + distR[q];
+                proc[q] = true;
             }
         }
 
-        private static long ShortestPath()
+        private static void ProcessBck(int q, int start, int target)
         {
-            var distance = long.MaxValue;
-            foreach (var value in visitedNodes.Values)
+            if (!procR[q])
             {
-                if (value[0] < long.MaxValue && value[1] < long.MaxValue)
+                foreach (var e in vertices[q].EdgesR)
                 {
-                    if (value[0] + value[1] < distance)
-                        distance = value[0] + value[1];
+                    var lpi = e.Weight - Pi(vertices[target], vertices[start], vertices[q])
+                            + Pi(vertices[target], vertices[start], vertices[e.Destination]);
+                    if (distPiR[e.Destination] > distPiR[q] + lpi)
+                    {
+                        distR[e.Destination] = distR[q] + e.Weight;
+                        distPiR[e.Destination] = distPiR[q] + lpi;
+                        queueR.SetPriority(e.Destination, distPiR[e.Destination]);
+                        if (dist[e.Destination] < long.MaxValue && dist[e.Destination] + distR[e.Destination] < minDistance)
+                            minDistance = dist[e.Destination] + distR[e.Destination];
+                        visitedNodes.Add(e.Destination);
+                    }
                 }
+                if (dist[q] < long.MaxValue && dist[q] + distR[q] < minDistance)
+                    minDistance = dist[q] + distR[q];
+                procR[q] = true;
             }
-            return distance;
         }
 
         private static long BidirectionalAStar(int start, int end)
         {
-            for (int i = 0; i < dist.Length; i++)
-            {
-                dist[i] = distR[i] = long.MaxValue;
-                distPi[i] = distPiR[i] = double.MaxValue;
-                proc[i] = procR[i] = false;
-            }
             dist[start] = 0;
             distPi[start] = 0;
             distR[end] = 0;
             distPiR[end] = 0;
-            if (start == end) return 0;
             visitedNodes.Clear();
-            visitedNodes.Add(start, new long[2] { 0, long.MaxValue });
-            visitedNodes.Add(end, new long[2] { long.MaxValue, 0 });
+            visitedNodes.Add(start);
+            if (end != start) visitedNodes.Add(end);
 
             queue.Clear();
             queue.SetPriority(start, 0);
             queueR.Clear();
             queueR.SetPriority(end, 0);
 
+            minDistance = long.MaxValue;
+
             while (!queue.Empty() || !queueR.Empty())
             {
                 if (!queue.Empty())
                 {
                     var q = queue.ExtractMin();
-                    Process(q, queue, start, end, dist, distPi, proc, true);
+                    ProcessFwd(q.Index, start, end);
                     if (procR[q.Index])
-                    {
-                        return ShortestPath();
-                    }
+                        break;
                 }
 
                 if (!queueR.Empty())
                 {
                     var q = queueR.ExtractMin();
-                    Process(q, queueR, end, start, distR, distPiR, procR, false);
+                    ProcessBck(q.Index, end, start);
                     if (proc[q.Index])
-                    {
-                        return ShortestPath();
-                    }
+                        break;
                 }
             }
-            return -1;
+            foreach (var i in visitedNodes)
+            {
+                proc[i] = procR[i] = false;
+                dist[i] = distR[i] = long.MaxValue;
+                distPi[i] = distPiR[i] = double.MaxValue;
+            }
+            return minDistance < long.MaxValue ? minDistance : -1;
         }
 
         public static string[] Solve(string[] vertexData, string[] edgeData, string[] queryData)
@@ -254,7 +258,7 @@ namespace _2_dist_with_coords
             for (int i = 1; i <= vertexData.Length; i++)
             {
                 var v = vertexData[i - 1].AsIntArray();
-                vertices[i] = new Vertex(v[0], v[1]);
+                vertices[i] = new Vertex(50, v[0], v[1]);
             }
             for (int i = 0; i < edgeData.Length; i++)
             {
@@ -271,7 +275,14 @@ namespace _2_dist_with_coords
             distPiR = new double[vertices.Length];
             queue = new PriorityQueue(vertexData.Length);
             queueR = new PriorityQueue(vertexData.Length);
-            visitedNodes = new Dictionary<int, long[]>();
+            visitedNodes = new List<int>(1000);
+
+            for (int i = 0; i < dist.Length; i++)
+            {
+                dist[i] = distR[i] = long.MaxValue;
+                distPi[i] = distPiR[i] = double.MaxValue;
+                proc[i] = procR[i] = false;
+            }
 
             //queries
             var result = new string[queryData.Length];

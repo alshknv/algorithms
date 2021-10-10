@@ -20,10 +20,10 @@ namespace _1_friend_suggestion
     {
         public readonly List<Edge> Edges;
         public readonly List<Edge> EdgesR;
-        public Vertex()
+        public Vertex(int count)
         {
-            Edges = new List<Edge>(100);
-            EdgesR = new List<Edge>(100);
+            Edges = new List<Edge>(count);
+            EdgesR = new List<Edge>(count);
         }
         public void AddEdge(int destination, int weight)
         {
@@ -139,87 +139,92 @@ namespace _1_friend_suggestion
         private static bool[] procR;
         private static PriorityQueue queue;
         private static PriorityQueue queueR;
-        private static Dictionary<int, long[]> visitedNodes;
+        private static List<int> visitedNodes;
+        private static long minDistance;
 
         private static Vertex[] vertices;
 
-        private static void Process(QueueItem q, PriorityQueue queue, long[] dist, bool[] proc, bool forward)
+        private static void ProcessFwd(int node)
         {
-            if (dist[q.Index] < long.MaxValue && !proc[q.Index])
+            if (dist[node] < long.MaxValue && !proc[node])
             {
-                foreach (var e in forward ? vertices[q.Index].Edges : vertices[q.Index].EdgesR)
+                foreach (var e in vertices[node].Edges)
                 {
-                    if (dist[e.Destination] > dist[q.Index] + e.Weight)
+                    if (dist[e.Destination] > dist[node] + e.Weight)
                     {
-                        dist[e.Destination] = dist[q.Index] + e.Weight;
+                        dist[e.Destination] = dist[node] + e.Weight;
                         queue.SetPriority(e.Destination, dist[e.Destination]);
-
-                        if (!visitedNodes.ContainsKey(e.Destination))
-                        {
-                            visitedNodes.Add(e.Destination, new long[2] { forward ? dist[e.Destination] : long.MaxValue, forward ? long.MaxValue : dist[e.Destination] });
-                        }
-                        else
-                        {
-                            visitedNodes[e.Destination][forward ? 0 : 1] = dist[e.Destination];
-                        }
+                        if (dist[e.Destination] < long.MaxValue && distR[e.Destination] < long.MaxValue && dist[e.Destination] + distR[e.Destination] < minDistance)
+                            minDistance = dist[e.Destination] + distR[e.Destination];
+                        visitedNodes.Add(e.Destination);
                     }
                 }
-                proc[q.Index] = true;
+                if (distR[node] < long.MaxValue && dist[node] + distR[node] < minDistance)
+                    minDistance = dist[node] + distR[node];
+                proc[node] = true;
             }
         }
 
-        private static long ShortestPath()
+        private static void ProcessBck(int node)
         {
-            var distance = long.MaxValue;
-            foreach (var value in visitedNodes.Values)
+            if (distR[node] < long.MaxValue && !procR[node])
             {
-                if (value[0] < long.MaxValue && value[1] < long.MaxValue)
+                foreach (var e in vertices[node].EdgesR)
                 {
-                    if (value[0] + value[1] < distance)
-                        distance = value[0] + value[1];
+                    if (distR[e.Destination] > distR[node] + e.Weight)
+                    {
+                        distR[e.Destination] = distR[node] + e.Weight;
+                        queueR.SetPriority(e.Destination, distR[e.Destination]);
+                        if (dist[e.Destination] < long.MaxValue && dist[e.Destination] + distR[e.Destination] < minDistance)
+                            minDistance = dist[e.Destination] + distR[e.Destination];
+                        visitedNodes.Add(e.Destination);
+                    }
                 }
+                if (dist[node] < long.MaxValue && dist[node] + distR[node] < minDistance)
+                    minDistance = dist[node] + distR[node];
+                procR[node] = true;
             }
-            return distance;
         }
 
         private static long BidirectionalDijkstra(int start, int end)
         {
-            for (int i = 0; i < dist.Length; i++)
-            {
-                proc[i] = procR[i] = false;
-                dist[i] = distR[i] = long.MaxValue;
-            }
             dist[start] = 0;
             distR[end] = 0;
-            if (start == end) return 0;
             visitedNodes.Clear();
-            visitedNodes.Add(start, new long[2] { 0, long.MaxValue });
-            visitedNodes.Add(end, new long[2] { long.MaxValue, 0 });
+            visitedNodes.Add(start);
+            if (end != start) visitedNodes.Add(end);
 
             queue.Clear();
             queue.SetPriority(start, 0);
             queueR.Clear();
             queueR.SetPriority(end, 0);
 
+            minDistance = long.MaxValue;
+
             while (!queue.Empty() || !queueR.Empty())
             {
                 if (!queue.Empty())
                 {
                     var q = queue.ExtractMin();
-                    Process(q, queue, dist, proc, true);
+                    ProcessFwd(q.Index);
                     if (procR[q.Index])
-                        return ShortestPath();
+                        break;
                 }
 
                 if (!queueR.Empty())
                 {
                     var q = queueR.ExtractMin();
-                    Process(q, queueR, distR, procR, false);
+                    ProcessBck(q.Index);
                     if (proc[q.Index])
-                        return ShortestPath();
+                        break;
                 }
             }
-            return -1;
+            foreach (var i in visitedNodes)
+            {
+                proc[i] = procR[i] = false;
+                dist[i] = distR[i] = long.MaxValue;
+            }
+            return minDistance < long.MaxValue ? minDistance : -1;
         }
 
         public static string[] Solve(int vertexCount, string[] edges, string[] queries)
@@ -227,7 +232,7 @@ namespace _1_friend_suggestion
             vertices = new Vertex[vertexCount + 1];
             for (int i = 1; i <= vertexCount; i++)
             {
-                vertices[i] = new Vertex();
+                vertices[i] = new Vertex(50);
             }
             //graph init
             for (int i = 0; i < edges.Length; i++)
@@ -242,10 +247,16 @@ namespace _1_friend_suggestion
             proc = new bool[vertices.Length];
             procR = new bool[vertices.Length];
 
+            for (int i = 0; i < dist.Length; i++)
+            {
+                proc[i] = procR[i] = false;
+                dist[i] = distR[i] = long.MaxValue;
+            }
+
             queue = new PriorityQueue(vertexCount);
             queueR = new PriorityQueue(vertexCount);
 
-            visitedNodes = new Dictionary<int, long[]>();
+            visitedNodes = new List<int>(1000);
 
             //queries
             var result = new string[queries.Length];

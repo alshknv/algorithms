@@ -288,7 +288,7 @@ namespace _3_dist_preprocess_small
             }
             for (int i = 0; i < Vertices.Length; i++)
             {
-                dist[i] = long.MaxValue;
+                dist[i] = distR[i] = long.MaxValue;
                 hops[i] = 0;
             }
             var importanceQueue = new PriorityQueue(Vertices.Skip(1).ToArray());
@@ -340,6 +340,7 @@ namespace _3_dist_preprocess_small
                     if (dist[edge.Destination] > dist[q.Index] + edge.Weight)
                     {
                         dist[edge.Destination] = dist[q.Index] + edge.Weight;
+                        changedDistances.Add(edge.Destination);
                         queue.SetPriority(edge.Destination, dist[edge.Destination]);
                     }
                 }
@@ -355,11 +356,7 @@ namespace _3_dist_preprocess_small
                 var query = queries[k].AsIntArray();
                 // bidirectional upward Dijkstra
                 var estimate = long.MaxValue;
-                for (int i = 0; i < Vertices.Length; i++)
-                {
-                    dist[i] = distR[i] = long.MaxValue;
-                    proc[i] = procR[i] = false;
-                }
+                changedDistances.Clear();
                 dist[query[0]] = distR[query[1]] = 0;
 
                 queue.Clear();
@@ -390,6 +387,13 @@ namespace _3_dist_preprocess_small
                         }
                     }
                 }
+                foreach (var i in changedDistances)
+                {
+                    dist[i] = distR[i] = long.MaxValue;
+                    proc[i] = procR[i] = false;
+                }
+                dist[query[0]] = distR[query[1]] = long.MaxValue;
+                proc[query[0]] = procR[query[1]] = false;
                 result[k] = (estimate < long.MaxValue ? estimate : -1).ToString();
             }
             return result;

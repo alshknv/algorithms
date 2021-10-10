@@ -16,7 +16,7 @@ namespace _5_travelling_salesman_problem
     {
         public readonly int Source;
         public readonly int Destination;
-        public readonly int Weight;
+        public int Weight;
 
         public Edge(int source, int destination, int weight)
         {
@@ -176,29 +176,27 @@ namespace _5_travelling_salesman_problem
         private static int[] hops;
         private static PriorityQueue queue;
         private static PriorityQueue queueR;
-        private static List<Edge> shortcuts;
+        private static Dictionary<string, Edge> shortcuts;
+        private static List<int> changedDistances;
 
-        private static Edge[] WitnessSearch(int nindex)
+        private static void WitnessSearch(int nindex)
         {
             shortcuts.Clear();
             long maxL = 0;
             foreach (var pred in Vertices[nindex].Predecessors)
             {
+                if (Vertices[pred.Source].Contracted) continue;
                 foreach (var succ in Vertices[nindex].Edges)
                 {
+                    if (Vertices[succ.Destination].Contracted) continue;
                     if (pred.Weight + succ.Weight > maxL) maxL = pred.Weight + succ.Weight;
                 }
             }
-
+            changedDistances.Clear();
             foreach (var pred in Vertices[nindex].Predecessors)
             {
                 if (Vertices[pred.Source].Contracted) continue;
                 // witness dijkstra
-                for (int i = 0; i < Vertices.Length; i++)
-                {
-                    dist[i] = long.MaxValue;
-                    hops[i] = 0;
-                }
                 dist[pred.Source] = 0;
                 queue.Clear();
                 queue.SetPriority(pred.Source, 0);
@@ -215,6 +213,7 @@ namespace _5_travelling_salesman_problem
                             dist[v.Destination] = dist[u.Index] + v.Weight;
                             hops[v.Destination] = hops[u.Index] + 1;
                             queue.SetPriority(v.Destination, dist[v.Destination]);
+                            changedDistances.Add(v.Destination);
                         }
                     }
                 }
@@ -224,12 +223,25 @@ namespace _5_travelling_salesman_problem
                     if (dist[succ.Destination] > pred.Weight + succ.Weight && !Vertices[succ.Destination].Contracted)
                     {
                         //planning shortcut
-                        shortcuts.Add(new Edge(pred.Source, succ.Destination, pred.Weight + succ.Weight));
+                        var key = $"{pred.Source}-{succ.Destination}";
+                        if (!shortcuts.ContainsKey(key))
+                        {
+                            shortcuts.Add(key, new Edge(pred.Source, succ.Destination, pred.Weight + succ.Weight));
+                        }
+                        else if (pred.Weight + succ.Weight < shortcuts[key].Weight)
+                        {
+                            shortcuts[key].Weight = pred.Weight + succ.Weight;
+                        }
                     }
                 }
-            }
 
-            return shortcuts.ToArray();
+                foreach (var i in changedDistances)
+                {
+                    dist[i] = long.MaxValue;
+                    hops[i] = 0;
+                }
+                dist[pred.Source] = long.MaxValue;
+            }
         }
 
         private static void UpdateNeighborImportance(Vertex v)
@@ -262,7 +274,8 @@ namespace _5_travelling_salesman_problem
             queue = new PriorityQueue(vertexCount);
             queueR = new PriorityQueue(vertexCount);
             hops = new int[Vertices.Length];
-            shortcuts = new List<Edge>(50);
+            shortcuts = new Dictionary<string, Edge>(5000);
+            changedDistances = new List<int>(5000);
 
             for (int i = 0; i < graph.Length; i++)
             {
@@ -273,17 +286,21 @@ namespace _5_travelling_salesman_problem
                     Vertices[e[1]].AddPredecessor(e[0], e[1], e[2]);
                 }
             }
+            for (int i = 0; i < Vertices.Length; i++)
+            {
+                dist[i] = distR[i] = long.MaxValue;
+                hops[i] = 0;
+            }
             var importanceQueue = new PriorityQueue(Vertices.Skip(1).ToArray());
             var contractOrder = 0;
             while (!importanceQueue.Empty())
             {
                 var node = importanceQueue.ExtractMin();
-                var shortcuts = WitnessSearch(node.Index);
-                Vertices[node.Index].EdgeDifference = shortcuts.Length - Vertices[node.Index].Predecessors.Count - Vertices[node.Index].Edges.Count;
-                Vertices[node.Index].ShortcutCover = shortcuts.Length;
+                Vertices[node.Index].EdgeDifference = Vertices[node.Index].Predecessors.Count * Vertices[node.Index].Edges.Count;
                 var nextMin = importanceQueue.GetMin();
                 if (nextMin == null || Vertices[node.Index].Importance <= Vertices[nextMin.Index].Importance)
                 {
+                    WitnessSearch(node.Index);
                     // contract the least important node
                     Vertices[node.Index].Contracted = true;
                     Vertices[node.Index].Order = contractOrder++;
@@ -300,7 +317,7 @@ namespace _5_travelling_salesman_problem
                         .RemoveAll(e => Vertices[e.Destination].Contracted && Vertices[e.Destination].Order < Vertices[node.Index].Order);
 
                     // adding shortcut
-                    foreach (var shortcut in shortcuts)
+                    foreach (var shortcut in shortcuts.Values)
                     {
                         Vertices[shortcut.Source].AddEdge(shortcut);
                         Vertices[shortcut.Destination].AddPredecessor(shortcut);
@@ -323,6 +340,7 @@ namespace _5_travelling_salesman_problem
                     if (dist[edge.Destination] > dist[q.Index] + edge.Weight)
                     {
                         dist[edge.Destination] = dist[q.Index] + edge.Weight;
+                        changedDistances.Add(edge.Destination);
                         queue.SetPriority(edge.Destination, dist[edge.Destination]);
                     }
                 }
@@ -334,11 +352,7 @@ namespace _5_travelling_salesman_problem
         {
             // bidirectional upward Dijkstra
             var estimate = long.MaxValue;
-            for (int i = 0; i < Vertices.Length; i++)
-            {
-                dist[i] = distR[i] = long.MaxValue;
-                proc[i] = procR[i] = false;
-            }
+            changedDistances.Clear();
             dist[a] = distR[b] = 0;
 
             queue.Clear();
@@ -369,6 +383,13 @@ namespace _5_travelling_salesman_problem
                     }
                 }
             }
+            foreach (var i in changedDistances)
+            {
+                dist[i] = distR[i] = long.MaxValue;
+                proc[i] = procR[i] = false;
+            }
+            dist[a] = distR[b] = long.MaxValue;
+            proc[a] = procR[b] = false;
             return estimate < long.MaxValue ? estimate : -1;
         }
 
