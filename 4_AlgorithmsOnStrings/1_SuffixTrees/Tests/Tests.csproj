@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
+    <PackageReference Include="xunit" Version="2.4.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
+    <PackageReference Include="coverlet.collector" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\1_trie\1_trie.csproj" />
+    <ProjectReference Include="..\2_trie_matching\2_trie_matching.csproj" />
+    <ProjectReference Include="..\4_suffix_tree\4_suffix_tree.csproj" />
+    <ProjectReference Include="..\3_trie_matching_extended\3_trie_matching_extended.csproj" />
+    <ProjectReference Include="..\5_non_shared_substring\5_non_shared_substring.csproj" />
+  </ItemGroup>
+
+</Project>
