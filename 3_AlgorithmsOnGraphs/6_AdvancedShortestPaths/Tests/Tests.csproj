@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+
+    <RootNamespace>Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
+    <PackageReference Include="xunit" Version="2.4.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
+    <PackageReference Include="coverlet.collector" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\1_friend_suggestion\1_friend_suggestion.csproj" />
+    <ProjectReference Include="..\2_dist_with_coords\2_dist_with_coords.csproj" />
+    <ProjectReference Include="..\3_dist_preprocess_small\3_dist_preprocess_small.csproj" />
+    <ProjectReference Include="..\4_dist_preprocess_large\4_dist_preprocess_large.csproj" />
+    <ProjectReference Include="..\5_travelling_salesman_problem\5_travelling_salesman_problem.csproj" />
+  </ItemGroup>
+
+</Project>
