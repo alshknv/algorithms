@@ -5,11 +5,10 @@ namespace _1_trie
 {
     public static class Trie
     {
-        public static string[] Solve(string[] patterns)
+        private static List<Dictionary<char, int>> BuildTrie(string[] patterns, out int count)
         {
-            var trie = new List<Dictionary<char, int>>();
-            trie.Add(new Dictionary<char, int>());
-            var count = 0;
+            var trie = new List<Dictionary<char, int>>() { new Dictionary<char, int>() };
+            count = 0;
             for (int i = 0; i < patterns.Length; i++)
             {
                 var current = 0;
@@ -29,6 +28,13 @@ namespace _1_trie
                     }
                 }
             }
+            return trie;
+        }
+
+        public static string[] Solve(string[] patterns)
+        {
+            int count;
+            var trie = BuildTrie(patterns, out count);
             var result = new List<string>(count);
             for (int i = 0; i < trie.Count; i++)
             {
