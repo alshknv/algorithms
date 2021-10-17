@@ -14,27 +14,28 @@ namespace _3_trie_matching_extended
                 var current = 0;
                 for (int j = 0; j < patterns[i].Length; j++)
                 {
+                    int next;
                     if (trie[current].ContainsKey(patterns[i][j]))
                     {
-                        if (j == patterns[i].Length - 1)
-                        {
-                            trie[current][patterns[i][j]] = new Tuple<int, bool>(trie[current][patterns[i][j]].Item1, true);
-                        }
-                        current = trie[current][patterns[i][j]].Item1;
+                        next = trie[current][patterns[i][j]].Item1;
                     }
                     else
                     {
-                        var next = trie.Count;
+                        next = trie.Count;
                         trie[current][patterns[i][j]] = new Tuple<int, bool>(next, false);
-                        current = next;
                         trie.Add(new Dictionary<char, Tuple<int, bool>>());
                     }
+                    if (j == patterns[i].Length - 1)
+                    {
+                        trie[current][patterns[i][j]] = new Tuple<int, bool>(trie[current][patterns[i][j]].Item1, true);
+                    }
+                    current = next;
                 }
             }
             return trie;
         }
 
-        private static bool PrefixTrieMatching(char[] text, List<Dictionary<char, Tuple<int, bool>>> trie)
+        private static bool PrefixTrieMatching(string text, List<Dictionary<char, Tuple<int, bool>>> trie)
         {
             var k = 0;
             var v = 0;
@@ -62,16 +63,37 @@ namespace _3_trie_matching_extended
             }
         }
 
+        public static string BruteForce(string text, string[] patterns)
+        {
+            List<int> pos = new List<int>();
+            for (int i = 0; i < text.Length; i++)
+            {
+                for (int j = 0; j < patterns.Length; j++)
+                {
+                    if ((patterns[j].Length + i - 1) < text.Length)
+                    {
+                        string sub = text.Substring(i, patterns[j].Length);
+                        if (sub == patterns[j])
+                        {
+                            pos.Add(i);
+                            break;
+                        }
+                    }
+                }
+            }
+            return string.Join(" ", pos);
+        }
+
         public static string Solve(string text, string[] patterns)
         {
             var matches = new List<int>();
             var trie = BuildTrie(patterns);
-            var k = 0;
-            while (k < text.Length)
+            var length = text.Length;
+            for (int k = 0; k < length; k++)
             {
-                if (PrefixTrieMatching(text.Skip(k).ToArray(), trie))
+                if (PrefixTrieMatching(text, trie))
                     matches.Add(k);
-                k++;
+                text = text.Substring(1);
             }
             return string.Join(" ", matches);
         }

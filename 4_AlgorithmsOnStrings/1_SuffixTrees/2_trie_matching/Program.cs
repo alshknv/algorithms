@@ -30,7 +30,7 @@ namespace _2_trie_matching
             return trie;
         }
 
-        private static bool PrefixTrieMatching(char[] text, List<Dictionary<char, int>> trie)
+        private static bool PrefixTrieMatching(string text, List<Dictionary<char, int>> trie)
         {
             var k = 0;
             var v = 0;
@@ -60,12 +60,12 @@ namespace _2_trie_matching
         {
             var matches = new List<int>();
             var trie = BuildTrie(patterns);
-            var k = 0;
-            while (k < text.Length)
+            var length = text.Length;
+            for (int k = 0; k < length; k++)
             {
-                if (PrefixTrieMatching(text.Skip(k).ToArray(), trie))
+                if (PrefixTrieMatching(text, trie))
                     matches.Add(k);
-                k++;
+                text = text.Substring(1);
             }
             return string.Join(" ", matches);
         }

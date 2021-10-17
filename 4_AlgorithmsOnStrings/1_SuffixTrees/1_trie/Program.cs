@@ -40,7 +40,7 @@ namespace _1_trie
             {
                 foreach (var edge in trie[i])
                 {
-                    result.Add($"{i}->{edge.Value}:{edge.Key}");
+                    result.Add(i.ToString() + "->" + edge.Value.ToString() + ":" + edge.Key);
                 }
             }
             return result.ToArray();

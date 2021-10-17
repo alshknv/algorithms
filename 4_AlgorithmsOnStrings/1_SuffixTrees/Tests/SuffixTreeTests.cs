@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System;
 using System.Linq;
 using System.IO;
@@ -42,6 +43,29 @@ namespace Tests
             Array.Sort(answer);
             Array.Sort(result);
             Assert.Equal(answer, result);
+        }
+
+        [Fact]
+        public void Perfomance()
+        {
+            var line = "";
+            var rnd = new Random();
+            for (int i = 0; i < 5000; i++)
+            {
+                var val = rnd.Next(1000) % 4;
+                switch (val)
+                {
+                    case 0: line += "A"; break;
+                    case 1: line += "C"; break;
+                    case 2: line += "G"; break;
+                    case 3: line += "T"; break;
+                }
+            }
+            var watch = new Stopwatch();
+            watch.Start();
+            SuffixTree.Solve(line + "$");
+            watch.Stop();
+            Assert.True(watch.ElapsedMilliseconds <= 1500);
         }
     }
 }

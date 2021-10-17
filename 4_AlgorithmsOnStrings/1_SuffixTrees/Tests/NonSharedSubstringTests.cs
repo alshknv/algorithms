@@ -47,5 +47,11 @@ namespace Tests
             var result = NonSharedSubstring.Solve(lines[0], lines[1]);
             Assert.Equal(answer[0], result);
         }
+
+        [Fact]
+        public void Test1()
+        {
+            Assert.Equal("A", NonSharedSubstring.Solve("TGGATAATAC", "CCCTGCTCTT"));
+        }
     }
 }

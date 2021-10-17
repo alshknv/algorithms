@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System;
 using System.IO;
 using System.Linq;
@@ -36,6 +37,17 @@ namespace Tests
             var answer = File.ReadAllLines($"{tf}.a").Select(x => x.TrimEnd()).ToArray();
             var result = TrieMatching.Solve(lines[0], lines.Skip(2).ToArray());
             Assert.Equal(answer.Length > 0 ? answer[0] : "", result);
+        }
+
+        [Fact]
+        public void LongStringPerfomance()
+        {
+            var line = new string('A', 10000);
+            var watch = new Stopwatch();
+            watch.Start();
+            TrieMatching.Solve(line, new string[] { "A" });
+            watch.Stop();
+            Assert.True(watch.ElapsedMilliseconds <= 500);
         }
     }
 }
