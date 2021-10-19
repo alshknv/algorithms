@@ -46,6 +46,18 @@ namespace Tests
         }
 
         [Fact]
+
+        public void Test1()
+        {
+            var answer = new string[] { "$", "$", "A$", "A$", "CAA$", "A$", "CAA$", "CA", "CA", "A" };
+            var result = SuffixTree.Solve("ACACAA$");
+            Array.Sort(answer);
+            Array.Sort(result);
+            Assert.Equal(answer, result);
+        }
+
+
+        [Fact]
         public void Perfomance()
         {
             var line = "";

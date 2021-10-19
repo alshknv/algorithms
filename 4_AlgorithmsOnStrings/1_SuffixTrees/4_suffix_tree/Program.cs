@@ -7,99 +7,105 @@ namespace _4_suffix_tree
     public class TreeNode
     {
         public Dictionary<char, int> Edges = new Dictionary<char, int>();
+        public int Parent;
         public int SuffixStart;
         public int SuffixLength;
     }
 
     public static class SuffixTree
     {
-        private static TreeNode[] BuildTrie(string text)
-        {
-            var trie = new List<TreeNode>() { new TreeNode() };
-            var length = text.Length;
-            for (int i = 0; i < length; i++)
-            {
-                var current = 0;
-                for (int j = 0; j < text.Length; j++)
-                {
-                    if (trie[current].Edges.ContainsKey(text[j]))
-                    {
-                        current = trie[current].Edges[text[j]];
-                    }
-                    else
-                    {
-                        var next = trie.Count;
-                        trie[current].Edges[text[j]] = next;
-                        current = next;
-                        trie.Add(new TreeNode()
-                        {
-                            SuffixStart = i + j,
-                            SuffixLength = 1
-                        });
-                    }
-                }
-                text = text.Substring(1);
-            }
-            return trie.ToArray();
-        }
-
-        private static TreeNode[] BuildTree2(string text)
-        {
-            var trie = BuildTrie(text);
-            for (int i = trie.Length - 1; i >= 0; i--)
-            {
-                if (trie[i].Edges.Count == 1)
-                {
-                    var edge = trie[i].Edges.First().Value;
-                    trie[i].SuffixLength = trie[edge].SuffixLength + 1;
-                    trie[edge] = null;
-                    trie[i].Edges.Clear();
-                }
-            }
-            return trie.Where(t => t != null && t.SuffixLength > 0).ToArray();
-        }
-
         private static TreeNode[] BuildTree(string text)
         {
-            var tree = new List<TreeNode>() { new TreeNode() };
             var origText = text;
+            var tree = new List<TreeNode>() { new TreeNode() };
             for (int i = 0; i < origText.Length; i++)
             {
                 var current = 0;
-                var depth = 0;
+                var txti = 0;
                 while (true)
                 {
-                    if (tree[current].Edges.ContainsKey(text[depth]))
+                    var p = 0;
+                    if (current > 0)
                     {
-                        current = tree[current].Edges[text[depth]];
-                        if (tree[current].Edges.Count == 0)
+                        // if it is not root node, skip common prefix
+                        while (txti + p < text.Length && p < tree[current].SuffixLength &&
+                            text[txti + p] == origText[tree[current].SuffixStart + p])
                         {
-                            var next = tree.Count;
+                            p++;
+                        }
+                        txti += p;
+                    }
+                    if (p == tree[current].SuffixLength)
+                    {
+                        if (tree[current].Edges.ContainsKey(text[txti]))
+                        {
+                            current = tree[current].Edges[text[txti]];
+                        }
+                        else
+                        {
+                            // add a node and edge from current node
                             tree.Add(new TreeNode()
                             {
-                                SuffixStart = tree[current].SuffixStart + 1,
-                                SuffixLength = tree[current].SuffixLength - 1
+                                SuffixStart = i + txti,
+                                SuffixLength = origText.Length - i - txti,
+                                Parent = current
                             });
-                            tree[current].Edges.Add(origText[tree[next].SuffixStart], next);
-                            tree[current].SuffixLength = 1;
+                            tree[current].Edges[origText[i + txti]] = tree.Count - 1;
+                            break;
                         }
-                        depth++;
                     }
                     else
                     {
-                        var next = tree.Count;
-                        tree[current].Edges[text[depth]] = next;
+                        // splitting the node
+                        if (current > 0 && p < tree[current].SuffixLength)
+                        {
+                            if (tree[current].Edges.Count > 0)
+                            {
+                                var curchar1 = origText[tree[current].SuffixStart];
+                                var curchar2 = origText[tree[current].SuffixStart + p];
+                                var newnode = new TreeNode()
+                                {
+                                    SuffixStart = tree[current].SuffixStart,
+                                    SuffixLength = p,
+                                    Parent = tree[current].Parent,
+                                    Edges = new Dictionary<char, int>() {
+                                        {curchar2, current}
+                                    }
+                                };
+                                tree.Add(newnode);
+                                tree[tree[current].Parent].Edges[curchar1] = tree.Count - 1;
+                                tree[current].Parent = tree.Count - 1;
+                                tree[current].SuffixStart = newnode.SuffixStart + newnode.SuffixLength;
+                                tree[current].SuffixLength -= newnode.SuffixLength;
+                                current = tree.Count - 1;
+                            }
+                            else
+                            {
+                                var newnode = new TreeNode()
+                                {
+                                    SuffixStart = tree[current].SuffixStart + p,
+                                    SuffixLength = origText.Length - tree[current].SuffixStart - p,
+                                    Parent = current
+                                };
+                                tree.Add(newnode);
+                                tree[current].Edges[origText[newnode.SuffixStart]] = tree.Count - 1;
+                                tree[current].SuffixLength -= newnode.SuffixLength;
+                            }
+                        }
+                        // add a node and edge from current node
                         tree.Add(new TreeNode()
                         {
-                            SuffixStart = i + depth,
-                            SuffixLength = text.Length - depth
+                            SuffixStart = i + txti,
+                            SuffixLength = origText.Length - i - txti,
+                            Parent = current
                         });
-                        current = next;
+                        tree[current].Edges[origText[i + txti]] = tree.Count - 1;
                         break;
                     }
                 }
                 text = text.Substring(1);
             }
+
             return tree.Where(t => t != null && t.SuffixLength > 0).ToArray();
         }
 

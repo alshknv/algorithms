@@ -10,74 +10,153 @@ namespace _5_non_shared_substring
         public int Parent;
         public string FirstChar;
         public string Path;
-        // public bool Leaf;
-        public bool Left = true;
+        public bool Leaf;
         public int SuffixStart;
         public int SuffixLength;
-        public int? SuffixIndex;
     }
 
     public static class NonSharedSubstring
     {
-        private static TreeNode[] BuildTrie(string text)
+        private static TreeNode[] BuildTree(string text)
         {
-            var trie = new List<TreeNode>() { new TreeNode() };
             var origText = text;
+            var tree = new List<TreeNode>() { new TreeNode() };
             for (int i = 0; i < origText.Length; i++)
             {
                 var current = 0;
-                for (int j = 0; j < text.Length; j++)
+                var txti = 0;
+                while (true)
                 {
-                    if (trie[current].Edges.ContainsKey(text[j]))
+                    var p = 0;
+                    if (current > 0)
                     {
-                        current = trie[current].Edges[text[j]];
+                        // if it is not root node, skip common prefix
+                        while (txti + p < text.Length && p < tree[current].SuffixLength &&
+                            text[txti + p] == origText[tree[current].SuffixStart + p])
+                        {
+                            p++;
+                        }
+                        txti += p;
+                    }
+                    if (p == tree[current].SuffixLength)
+                    {
+                        if (tree[current].Edges.ContainsKey(text[txti]))
+                        {
+                            current = tree[current].Edges[text[txti]];
+                        }
+                        else
+                        {
+                            // add a node and edge from current node
+                            tree.Add(new TreeNode()
+                            {
+                                SuffixStart = i + txti,
+                                SuffixLength = origText.Length - i - txti,
+                                FirstChar = origText[i + txti].ToString(),
+                                Parent = current
+                            });
+                            tree[current].Edges[origText[i + txti]] = tree.Count - 1;
+                            break;
+                        }
                     }
                     else
                     {
-                        var next = trie.Count;
-                        trie[current].Edges[text[j]] = next;
-                        trie.Add(new TreeNode()
+                        // splitting the node
+                        if (current > 0 && p < tree[current].SuffixLength)
                         {
-                            SuffixStart = i + j,
-                            SuffixLength = 1,
-                            SuffixIndex = i,
-                            Parent = current,
-                            FirstChar = origText[i + j].ToString()
+                            if (tree[current].Edges.Count > 0)
+                            {
+                                var curchar1 = origText[tree[current].SuffixStart];
+                                var curchar2 = origText[tree[current].SuffixStart + p];
+                                var newnode = new TreeNode()
+                                {
+                                    SuffixStart = tree[current].SuffixStart,
+                                    SuffixLength = p,
+                                    FirstChar = curchar1.ToString(),
+                                    Parent = tree[current].Parent,
+                                    Edges = new Dictionary<char, int>() {
+                                        {curchar2, current}
+                                    }
+                                };
+                                tree.Add(newnode);
+                                tree[tree[current].Parent].Edges[curchar1] = tree.Count - 1;
+                                tree[current].Parent = tree.Count - 1;
+                                tree[current].SuffixStart = newnode.SuffixStart + newnode.SuffixLength;
+                                tree[current].SuffixLength -= newnode.SuffixLength;
+                                tree[current].FirstChar = curchar2.ToString();
+                                current = tree.Count - 1;
+                            }
+                            else
+                            {
+                                var newnode = new TreeNode()
+                                {
+                                    SuffixStart = tree[current].SuffixStart + p,
+                                    SuffixLength = origText.Length - tree[current].SuffixStart - p,
+                                    FirstChar = origText[tree[current].SuffixStart + p].ToString(),
+                                    Parent = current
+                                };
+                                tree.Add(newnode);
+                                tree[current].Edges[origText[newnode.SuffixStart]] = tree.Count - 1;
+                                tree[current].SuffixLength -= newnode.SuffixLength;
+                            }
+                        }
+                        // add a node and edge from current node
+                        tree.Add(new TreeNode()
+                        {
+                            SuffixStart = i + txti,
+                            SuffixLength = origText.Length - i - txti,
+                            FirstChar = origText[i + txti].ToString(),
+                            Parent = current
                         });
-                        current = next;
+                        tree[current].Edges[origText[i + txti]] = tree.Count - 1;
+                        break;
                     }
                 }
                 text = text.Substring(1);
             }
-            return trie.ToArray();
-        }
 
-        private static TreeNode[] BuildTree(string text)
-        {
-            var trie = BuildTrie(text);
-            for (int i = trie.Length - 1; i >= 0; i--)
+            var len = origText.Length / 2 - 1;
+            for (int i = 0; i < tree.Count; i++)
             {
-                if (trie[i].Edges.Count == 1 && trie[trie[i].Edges.First().Value].Edges.Count == 0)
+                if (tree[i] != null)
                 {
-                    trie[i].SuffixIndex = trie[trie[i].Edges.First().Value].SuffixIndex;
-                    trie[i].SuffixLength = trie[trie[i].Edges.First().Value].SuffixLength + 1;
-                    trie[trie[i].Edges.First().Value] = null;
-                    //trie[i].Leaf = true;
-                    trie[i].Edges.Clear();
-                }
-                if (trie[trie[i].Parent].Edges.Count > 0)
-                {
-                    var node = trie[i];
-                    var path = "";
-                    while (node.Parent > 0)
+                    while (tree[i].Edges.Count == 1)
                     {
-                        path = text[trie[node.Parent].SuffixStart].ToString() + path;
-                        node = trie[node.Parent];
+                        var edge = tree[i].Edges.Single();
+                        tree[i].SuffixLength += tree[edge.Value].SuffixLength;
+                        tree[i].Edges = tree[edge.Value].Edges;
+                        tree[edge.Value] = null;
+                        foreach (var e in tree[i].Edges)
+                        {
+                            tree[e.Value].Parent = i;
+                        }
                     }
-                    trie[i].Path = path;
+                    if (tree[i].Edges.Count == 0)
+                    {
+                        tree[i].Leaf = true;
+                    }
                 }
             }
-            return trie.ToArray();
+
+            for (int i = tree.Count - 1; i >= 0; i--)
+            {
+                var node = tree[i];
+                if (node == null || !node.Leaf) continue;
+                var path = "";
+                //find path and remove nodes with all-left leaves
+                while (node.Parent > 0)
+                {
+                    if (tree[node.Parent].Edges.All(e => tree[e.Value].Leaf && tree[e.Value].SuffixStart <= len))
+                    {
+                        tree[node.Parent].Edges.Clear();
+                        tree[node.Parent].Leaf = true;
+                        path = "";
+                    }
+                    path = origText.Substring(tree[node.Parent].SuffixStart, tree[node.Parent].SuffixLength) + path;
+                    node = tree[node.Parent];
+                }
+                tree[i].Path = path;
+            }
+            return tree.ToArray();
         }
 
         public static string Solve(string line1, string line2)
@@ -86,64 +165,9 @@ namespace _5_non_shared_substring
             var tree = BuildTree(combinedString);
             var minsub = line1;
 
-            // remove all nodes and edges leading to substrings of line2
-            // if some node lose all its edges, than remove this path from its parent
-            for (int i = tree.Length - 1; i > 0; i--)
+            for (int i = 1; i < tree.Length; i++)
             {
-                if (tree[i] != null && tree[i].Edges.Count == 0 && tree[i].SuffixStart > line1.Length)
-                {
-                    var node = tree[i];
-                    while (node != null)
-                    {
-                        if (tree[node.Parent] == null)
-                        {
-                            tree[i] = null;
-                            break;
-                        }
-                        tree[node.Parent].Left = false;
-                        foreach (var key in tree[node.Parent].Edges.Keys.ToArray())
-                        {
-                            if (tree[tree[node.Parent].Edges[key]].SuffixStart >= line1.Length)
-                            {
-                                tree[tree[node.Parent].Edges[key]] = null;
-                                tree[node.Parent].Edges.Remove(key);
-                            }
-                        }
-                        if (node.SuffixIndex == null || tree[node.Parent].Edges.Count > 0) break;
-                        //tree[node.Parent].Leaf = true;
-                        node = tree[node.Parent];
-                        node.SuffixStart = line1.Length + 1;
-                    }
-                }
-                else if (tree[i] != null && tree[i].Edges.Count > 0 && tree[i].Left && tree[i].Edges.All(e => tree[e.Value].Left))
-                {
-                    foreach (var key in tree[i].Edges.Keys.ToArray())
-                    {
-                        tree[tree[i].Edges[key]] = null;
-                        tree[i].Edges.Remove(key);
-                    }
-                    //tree[i].Leaf = true;
-                }
-                /*else if (tree[i] != null && tree[i].Edges.Count > 0 &&
-                    tree[i].Edges.Any(e => tree[e.Value].Leaf && tree[e.Value].SuffixStart == line1.Length))
-                {
-                    foreach (var key in tree[i].Edges.Keys.ToArray())
-                    {
-                        if (key == '#')
-                        {
-                            tree[tree[i].Edges[key]] = null;
-                            tree[i].Edges.Remove(key);
-                        }
-                    }
-                }*/
-            }
-
-            // only paths to substrings of line1 that are not present in line2 left
-            // choose shortest one
-
-            for (int i = 0; i < tree.Length; i++)
-            {
-                if (tree[i] != null && tree[i].Edges.Count == 0)
+                if (tree[i] != null && tree[i].Leaf && tree[i].SuffixStart < line1.Length)
                 {
                     var sub = tree[i].Path + tree[i].FirstChar;
                     if (sub.Length < minsub.Length)
