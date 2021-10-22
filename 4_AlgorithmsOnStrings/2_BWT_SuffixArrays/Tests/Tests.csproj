@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
+    <PackageReference Include="xunit" Version="2.4.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
+    <PackageReference Include="coverlet.collector" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\3_bwmatching\3_bwmatching.csproj" />
+    <ProjectReference Include="..\1_bwt\1_bwt.csproj" />
+    <ProjectReference Include="..\4_suffix_array\4_suffix_array.csproj" />
+    <ProjectReference Include="..\2_bwtinverse\2_bwtinverse.csproj" />
+  </ItemGroup>
+
+</Project>
