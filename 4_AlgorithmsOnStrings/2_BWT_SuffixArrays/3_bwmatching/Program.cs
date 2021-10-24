@@ -6,7 +6,7 @@ namespace _3_bwmatching
 {
     public static class BwtMatching
     {
-        private static int BetterBwtMatching(Dictionary<char, int> firstOccurence, string lastCol, string pattern, Dictionary<Tuple<char, int>, int> countI)
+        private static int BetterBwtMatching(SortedDictionary<char, int> firstOccurence, string lastCol, string pattern, Dictionary<char, int> chars, int[,] countI)
         {
             var top = 0;
             var bottom = lastCol.Length - 1;
@@ -17,8 +17,8 @@ namespace _3_bwmatching
                 {
                     var symbol = pattern[plast--];
                     if (!firstOccurence.ContainsKey(symbol)) return 0;
-                    top = firstOccurence[symbol] + countI[new Tuple<char, int>(symbol, top)];
-                    bottom = firstOccurence[symbol] + countI[new Tuple<char, int>(symbol, bottom + 1)] - 1;
+                    top = firstOccurence[symbol] + countI[chars[symbol], top];
+                    bottom = firstOccurence[symbol] + countI[chars[symbol], bottom + 1] - 1;
                 }
                 else
                 {
@@ -30,41 +30,50 @@ namespace _3_bwmatching
 
         public static string Solve(string bwt, string[] patterns)
         {
-            var firstCol = bwt.ToCharArray();
-            Array.Sort(firstCol);
-            var firstOccurence = new Dictionary<char, int>();
-            var count = new Dictionary<char, int>();
-            var countI = new Dictionary<Tuple<char, int>, int>();
+            // count occurencies of symbols
+            var firstOccurence = new SortedDictionary<char, int>();
             for (int i = 0; i < bwt.Length; i++)
             {
-                if (!firstOccurence.ContainsKey(firstCol[i])) firstOccurence[firstCol[i]] = i;
-                if (count.ContainsKey(bwt[i]))
-                {
-                    count[bwt[i]]++;
-                }
+                if (firstOccurence.ContainsKey(bwt[i]))
+                    firstOccurence[bwt[i]]++;
                 else
-                {
-                    count[bwt[i]] = 1;
-                }
-                foreach (var ch in count.Keys)
-                {
-                    countI[new Tuple<char, int>(ch, i + 1)] = count[ch];
-                }
+                    firstOccurence[bwt[i]] = 1;
             }
 
+            var accCount = firstOccurence.Values.ToArray();
+            var firstColChars = firstOccurence.Keys.ToArray();
+            var countLast = new Dictionary<char, int>() {
+                {firstColChars[0], 0}
+            };
+            var charIndex = new Dictionary<char, int>() {
+                {firstColChars[0], 0}
+            };
+
+            // calculate first occurencies
+            for (int i = 1; i < firstColChars.Length; i++)
+            {
+                accCount[i] = accCount[i - 1] + accCount[i];
+                firstOccurence[firstColChars[i]] = accCount[i] - firstOccurence[firstColChars[i]];
+                countLast.Add(firstColChars[i], 0);
+                charIndex.Add(firstColChars[i], i);
+            }
+            firstOccurence[firstColChars[0]] = 0;
+
+            var countI = new int[firstColChars.Length, bwt.Length + 1];
             for (int i = 0; i < bwt.Length; i++)
             {
-                foreach (var ch in count.Keys)
+                countLast[bwt[i]]++;
+
+                for (int c = 0; c < firstColChars.Length; c++)
                 {
-                    var tuple = new Tuple<char, int>(ch, i);
-                    if (!countI.ContainsKey(tuple)) countI[tuple] = 0;
+                    countI[c, i + 1] = countLast[firstColChars[c]];
                 }
             }
 
             var matches = new int[patterns.Length];
             for (int j = 0; j < patterns.Length; j++)
             {
-                matches[j] = BetterBwtMatching(firstOccurence, bwt, patterns[j], countI);
+                matches[j] = BetterBwtMatching(firstOccurence, bwt, patterns[j], charIndex, countI);
             }
             return string.Join(" ", matches);
         }
