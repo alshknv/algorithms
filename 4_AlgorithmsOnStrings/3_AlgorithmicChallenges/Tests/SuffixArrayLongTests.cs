@@ -37,5 +37,15 @@ namespace Tests
             var result = SuffixArrayLong.Solve(input[0]);
             Assert.Equal(answer[0], result);
         }
+
+        [Fact]
+        public void FileTest04()
+        {
+            const string tf = "../../../tests2/sample4";
+            var input = File.ReadAllLines(tf);
+            var answer = File.ReadAllLines($"{tf}.a");
+            var result = SuffixArrayLong.Solve(input[0]);
+            Assert.Equal(answer[0], result);
+        }
     }
 }
