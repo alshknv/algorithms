@@ -66,17 +66,6 @@ namespace _4_suffix_tree_from_array
                     var offset = lcpPrev - curNode.Depth;
                     var midNode = BreakEdge(curNode, text, edgeStart, offset);
                     curNode = CreateNewLeaf(midNode, text, suffix);
-                    var node = curNode;
-                    while (node.Parent.Start > 0)
-                    {
-                        if (node.Parent.Start == node.Start && node.Parent.End <= node.End)
-                        {
-                            var len = node.Parent.End - node.Parent.Start + 1;
-                            node.Parent.Start -= len;
-                            node.Parent.End -= len;
-                        }
-                        node = node.Parent;
-                    }
                 }
                 if (i < text.Length - 1) lcpPrev = lcpArray[i];
             }
@@ -90,7 +79,7 @@ namespace _4_suffix_tree_from_array
                 saString.Split(' ').Select(x => int.Parse(x)).ToArray(),
                 lcpAString.Split(' ').Select(x => int.Parse(x)).ToArray());
 
-            var result = new List<string>();
+            var result = new List<string>() { text };
             var stack = new Stack<Node>();
             stack.Push(tree);
             while (stack.Count > 0)
@@ -112,8 +101,6 @@ namespace _4_suffix_tree_from_array
 
         static void Main(string[] args)
         {
-            var gg = Solve("ATAAATG$", "7 2 3 0 4 6 1 5", "0 2 1 2 0 0 1");
-            return;
             var text = Console.ReadLine();
             var suffixArray = Console.ReadLine();
             var lcpArray = Console.ReadLine();
