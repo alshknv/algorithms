@@ -60,7 +60,7 @@ namespace _1_evacuation
                 {
                     var pathEdges = new Stack<ResidualEdge>();
                     var minCapacity = int.MaxValue;
-                    while (residual[i].PathBack != null)
+                    while (i > 1)
                     {
                         pathEdges.Push(residual[i].PathBack);
                         if (residual[i].PathBack.EdgeF.Flow < minCapacity) minCapacity = residual[i].PathBack.EdgeF.Flow;

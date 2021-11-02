@@ -13,4 +13,10 @@
     <PackageReference Include="coverlet.collector" Version="1.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\2_airline_crews\2_airline_crews.csproj" />
+    <ProjectReference Include="..\1_evacuation\1_evacuation.csproj" />
+    <ProjectReference Include="..\3_stock_charts\3_stock_charts.csproj" />
+  </ItemGroup>
+
 </Project>
