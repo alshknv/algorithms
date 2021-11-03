@@ -36,7 +36,7 @@ namespace _2_airline_crews
         {
             //breadth-first search
             var queue = new Queue<int>();
-            queue.Enqueue(1);
+            queue.Enqueue(0);
             Path result = null;
             var touched = new List<int>();
             while (queue.Count > 0)
@@ -47,7 +47,7 @@ namespace _2_airline_crews
                     // reconstruct path if sink was found
                     var pathEdges = new Stack<TwoWayEdge>();
                     var minCapacity = int.MaxValue;
-                    while (i > 1)
+                    while (i > 0)
                     {
                         pathEdges.Push(residual[i].PathBack);
                         if (residual[i].PathBack.EdgeF.Flow < minCapacity) minCapacity = residual[i].PathBack.EdgeF.Flow;
@@ -126,7 +126,7 @@ namespace _2_airline_crews
             for (int i = 1; i < input.Length; i++)
             {
                 //flights to crews
-                var connections = input[1].Split(' ').Select(x => int.Parse(x)).ToArray();
+                var connections = input[i].Split(' ').Select(x => int.Parse(x)).ToArray();
                 for (int j = 1; j <= connections.Length; j++)
                 {
                     if (connections[j - 1] == 0) continue;
@@ -151,13 +151,14 @@ namespace _2_airline_crews
 
             //reconstruct pairings
             var result = new int[flightCount];
-            for (int i = flightCount + 1; i < network.Length - 1; i++)
+            for (int i = 1; i <= flightCount; i++)
             {
-                for (int j = 0; j < network[i].Edges.Count; j++)
+                result[i - 1] = -1;
+                for (int j = 1; j < network[i].Edges.Count; j++)
                 {
                     if (network[i].Edges[j].EdgeF.Flow == 0)
                     {
-                        result[i - flightCount - 1] = network[i].Edges[j].EdgeF.Destination;
+                        result[i - 1] = network[i].Edges[j].EdgeF.Destination - flightCount;
                     }
                 }
             }
@@ -166,12 +167,6 @@ namespace _2_airline_crews
 
         static void Main(string[] args)
         {
-            var gg = Solve(new string[] {"3 4",
-                        "1 1 0 1",
-                        "0 1 0 0",
-                        "0 0 0 0"});
-            return;
-
             var nmline = Console.ReadLine();
             var nmCount = nmline.Split(' ').Select(x => int.Parse(x)).ToArray();
             var input = new string[nmCount[0] + 1];
