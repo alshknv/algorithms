@@ -4,7 +4,7 @@ using _1_energy_values;
 
 namespace Tests
 {
-    public class UnitTest1
+    public class EnergyValuesTests
     {
         [Fact]
         public void EmptyMatrix()

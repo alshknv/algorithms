@@ -5,29 +5,29 @@ namespace _1_energy_values
 {
     public static class EnergyValues
     {
-        private static void SwapToTop(double[][] matrix, int i)
+        private static void SwapToTop(decimal[][] matrix, int i)
         {
             var buf = matrix[0];
             matrix[0] = matrix[i];
             matrix[i] = buf;
         }
 
-        private static void Scale(double[][] matrix, int row, int pivCf)
+        private static void Scale(decimal[][] matrix, int row, int pivCf)
         {
-            double k = 1 / matrix[row][pivCf];
+            decimal k = matrix[row][pivCf];
             for (int j = 0; j < matrix[row].Length; j++)
             {
-                matrix[row][j] *= k;
+                matrix[row][j] /= k;
             }
         }
 
-        private static void Eliminate(double[][] matrix, int pivRow, int pivCf)
+        private static void Eliminate(decimal[][] matrix, int pivRow, int pivCf)
         {
             for (int i = 0; i < matrix.Length; i++)
             {
                 if (i != pivRow)
                 {
-                    double k = -matrix[i][pivCf] / matrix[pivRow][pivCf];
+                    decimal k = -matrix[i][pivCf] / matrix[pivRow][pivCf];
                     for (int j = 0; j < matrix[i].Length; j++)
                     {
                         matrix[i][j] += k * matrix[pivRow][j];
@@ -39,11 +39,11 @@ namespace _1_energy_values
         public static string Solve(string[] input)
         {
             // initialize matrix
-            var matrix = new double[input.Length][];
+            var matrix = new decimal[input.Length][];
             for (int i = 0; i < input.Length; i++)
             {
                 var coeff = input[i].Split(' ').Select(x => int.Parse(x)).ToArray();
-                matrix[i] = new double[coeff.Length];
+                matrix[i] = new decimal[coeff.Length];
                 for (int j = 0; j < coeff.Length; j++)
                 {
                     matrix[i][j] = coeff[j];
