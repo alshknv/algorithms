@@ -2,16 +2,16 @@ using System.Linq;
 using System.IO;
 using System;
 using Xunit;
-using _2_diet;
+using _3_ad_allocation;
 
 namespace Tests
 {
-    public class DietTests
+    public class AdAllocationTests
     {
         [Fact]
         public void BoundedSolution()
         {
-            Assert.Collection(Diet.Solve(new string[] { "3 2", "-1 -1", "1 0", "0 1", "-1 2 2", "-1 2" }),
+            Assert.Collection(AdAllocation.Solve(new string[] { "3 2", "-1 -1", "1 0", "0 1", "-1 2 2", "-1 2" }),
                 l1 => Assert.Equal("Bounded solution", l1),
                 l2 => Assert.Equal("0.000000000000000000 2.000000000000000000", l2));
         }
@@ -19,27 +19,27 @@ namespace Tests
         [Fact]
         public void Infinity()
         {
-            Assert.Collection(Diet.Solve(new string[] { "1 3", "0 0 1", "3", "1 1 1" }),
+            Assert.Collection(AdAllocation.Solve(new string[] { "1 3", "0 0 1", "3", "1 1 1" }),
                 l1 => Assert.Equal("Infinity", l1));
         }
 
         [Fact]
         public void NoSolution()
         {
-            Assert.Collection(Diet.Solve(new string[] { "2 2", "1 1", "-1 -1", "1 -2", "1 1" }),
+            Assert.Collection(AdAllocation.Solve(new string[] { "2 2", "1 1", "-1 -1", "1 -2", "1 1" }),
                 l1 => Assert.Equal("No solution", l1));
         }
 
         [Fact]
         public void FileTests()
         {
-            var files = Directory.EnumerateFiles("../../../tests2").Where(f => !f.Contains(".a")).ToArray();
+            var files = Directory.EnumerateFiles("../../../tests3").Where(f => !f.Contains(".a")).ToArray();
             Array.Sort(files);
             foreach (var file in files)
             {
                 var input = File.ReadAllLines(file);
                 var answer = File.ReadAllLines($"{file}.a");
-                var result = Diet.Solve(input);
+                var result = AdAllocation.Solve(input);
                 Assert.Equal(answer, result);
             }
         }

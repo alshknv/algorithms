@@ -48,8 +48,9 @@ namespace _2_diet
             }
         }
 
-        private static void GaussianElimination(decimal[][] matrix)
+        private static bool GaussianElimination(decimal[][] matrix, out decimal?[] result)
         {
+            result = new decimal?[matrix.Length];
             var c = 0;
             while (c < matrix.Length)
             {
@@ -65,14 +66,37 @@ namespace _2_diet
                 }
                 c++;
             }
+
+            //check if non-negative solution exists
+            for (int i = 0; i < matrix.Length; i++)
+            {
+                var hasValue = false;
+                for (int j = 0; j < matrix[i].Length - 1; j++)
+                {
+                    if (matrix[i][j] == 1)
+                    {
+                        if (!hasValue && matrix[i][matrix.Length] >= 0)
+                        {
+                            result[j] = matrix[i][matrix.Length];
+                            hasValue = true;
+                        }
+                        else
+                        {
+                            // multiple variables in one final equation
+                            return false;
+                        }
+                    }
+                }
+                if (!hasValue)
+                {
+                    // 0 == 1
+                    return false;
+                }
+            }
+            return true;
         }
 
         private static bool ResultSatisfiesConstraints(decimal[][] matrix, decimal?[] result)
-        {
-            return ResultSatisfiesConstraints(matrix, result.Select(x => (decimal)x).ToArray());
-        }
-
-        private static bool ResultSatisfiesConstraints(decimal[][] matrix, decimal[] result)
         {
             var satisfies = true;
             for (int i = 0; i < matrix.Length; i++)
@@ -95,7 +119,7 @@ namespace _2_diet
         {
             // init matrix
             var nm = input[0].Split(' ').Select(x => int.Parse(x)).ToArray();
-            var matrix = new decimal[nm[0] + nm[1]][];
+            var matrix = new decimal[nm[0] + nm[1] + 1][];
             for (int i = 0; i < nm[0]; i++)
             {
                 var coeff = input[i + 1].Split(' ').Select(x => int.Parse(x)).ToArray();
@@ -115,23 +139,19 @@ namespace _2_diet
                 matrix[nm[0] + k] = new decimal[nm[1] + 1];
                 for (int l = 0; l <= nm[1]; l++) matrix[nm[0] + k][l] = l == k ? 1 : 0;
             }
+
+            //last inequality for infinity
+            matrix[matrix.Length - 1] = new decimal[nm[1] + 1];
+            for (int l = 0; l < nm[1]; l++) matrix[matrix.Length - 1][l] = 1;
+            matrix[matrix.Length - 1][nm[1]] = 1000000000;
+
             var plCoeff = input[nm[0] + 2].Split(' ').Select(x => int.Parse(x)).ToArray();
 
-            //check if there're boundaries
-            for (int r = 0; r < nm[1]; r++)
-            {
-                var noboundResult = new decimal[nm[1]];
-                noboundResult[r] = 100000000;
-                if (ResultSatisfiesConstraints(matrix.Take(nm[0]).ToArray(), noboundResult))
-                {
-                    return new string[] { "Infinity" };
-                }
-            }
-
-            //enumerate groups of m inequalities
             var maxPleasure = decimal.MinValue;
-            string[] bestResult = null;
-            for (int w = 0; w < Math.Pow(2, nm[0] + nm[1]); w++)
+            decimal?[] bestResult = null;
+
+            //check all groups of m inequalities
+            for (int w = 0; w < Math.Pow(2, matrix.Length); w++)
             {
                 var setBits = SetBits(w);
                 if (setBits.Length != nm[1]) continue;
@@ -141,34 +161,8 @@ namespace _2_diet
                     system[t] = new List<decimal>(matrix[setBits[t]]).ToArray();
                 }
                 // solve system of m equalities
-                GaussianElimination(system);
-                var result = new decimal?[system.Length];
-
-                //check if non-negative solution exists
-                var gaussSolution = true;
-                for (int i = 0; i < system.Length; i++)
-                {
-                    var hasValue = false;
-                    for (int j = 0; j < system[i].Length - 1; j++)
-                    {
-                        if (system[i][j] == 1)
-                        {
-                            if (!hasValue && system[i][system.Length] >= 0)
-                            {
-                                result[j] = system[i][system.Length];
-                                hasValue = true;
-                            }
-                            else
-                            {
-                                gaussSolution = false;
-                                break;
-                            }
-                        }
-                    }
-                    if (!hasValue) gaussSolution = false;
-                    if (!gaussSolution) break;
-                }
-                if (!gaussSolution) continue;
+                decimal?[] result;
+                if (!GaussianElimination(system, out result)) continue;
 
                 // if result satifies constraints maximize function
 
@@ -182,13 +176,14 @@ namespace _2_diet
                     if (pleasure > maxPleasure)
                     {
                         maxPleasure = pleasure;
-                        bestResult = result.Select(x => x?.ToString("0.000000000000000000").Replace(",", ".")).ToArray();
+                        bestResult = result;
                     }
                 }
             }
 
             if (maxPleasure == decimal.MinValue) return new string[] { "No solution" };
-            return new string[] { "Bounded solution", string.Join(" ", bestResult) };
+            if (bestResult.Any(x => x > 1000000)) return new string[] { "Infinity" };
+            return new string[] { "Bounded solution", string.Join(" ", bestResult.Select(x => x?.ToString("0.000000000000000000").Replace(",", ".")).ToArray()) };
         }
 
         static void Main(string[] args)
