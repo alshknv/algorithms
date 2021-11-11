@@ -6,75 +6,80 @@ namespace _3_ad_allocation
 {
     public static class AdAllocation
     {
-        private static void Pivot(decimal[][] tableaux, int i0, int j0)
+        private static decimal[][] Pivot(decimal[][] tableaux, int i0, int j0)
         {
-            var p = tableaux[i0][j0];
-            for (int i = 1; i < tableaux.Length; i++)
+            var newTableaux = new decimal[tableaux.Length][];
+            for (int i = 0; i < tableaux.Length; i++)
             {
-                for (int j = 1; j < tableaux[i].Length; j++)
+                newTableaux[i] = new decimal[tableaux[i].Length];
+                for (int j = 0; j < tableaux[i].Length; j++)
                 {
-                    if (i == i0 && j == j0)
+                    if (j == 0 || i == 0)
                     {
-                        tableaux[i][j] = 1 / p;
+                        if (j == j0)
+                        {
+                            newTableaux[i][j] = tableaux[i0][0];
+                        }
+                        else if (i == i0)
+                        {
+                            newTableaux[i][j] = tableaux[0][j0];
+                        }
+                        else
+                        {
+                            newTableaux[i][j] = tableaux[i][j];
+                        }
+                    }
+                    else if (i == i0 && j == j0)
+                    {
+                        newTableaux[i][j] = 1 / tableaux[i0][j0];
                     }
                     else if (i == i0)
                     {
-                        tableaux[i][j] /= p;
+                        newTableaux[i][j] = tableaux[i][j] / tableaux[i0][j0];
                     }
                     else if (j == j0)
                     {
-                        tableaux[i][j] = -(tableaux[i][j] / p);
+                        newTableaux[i][j] = -(tableaux[i][j] / tableaux[i0][j0]);
                     }
                     else
                     {
-                        tableaux[i][j] -= (tableaux[i0][j] * tableaux[i][j0] / p);
+                        newTableaux[i][j] = tableaux[i][j] - (tableaux[i0][j] * tableaux[i][j0] / tableaux[i0][j0]);
                     }
                 }
             }
-
-            // swap indices
-            var buf = tableaux[0][j0];
-            tableaux[0][j0] = tableaux[i0][0];
-            tableaux[i0][0] = buf;
+            return newTableaux;
         }
 
-        public static string[] Solve(string[] input)
+        private static string[] BoundedSolution(decimal[][] tableaux)
         {
-            // init simplex tableaux
-            var nm = input[0].Split(' ').Select(x => int.Parse(x)).ToArray();
-            var tableaux = new decimal[nm[0] + 2][];
-            for (int i = 1; i <= tableaux.Length; i++)
-            {
-                tableaux[i] = new decimal[nm[1] + 2];
-                tableaux[i][0] = -i; // indices of y
-                var coeff = input[i + 1].Split(' ').Select(x => int.Parse(x)).ToArray();
-                for (int j = 1; j <= coeff.Length; j++)
-                {
-                    tableaux[i][0] = j; // indices of x
-                    tableaux[i][j] = coeff[j - 1];
-                }
-            }
-            var b = input[nm[0] + 1].Split(' ').Select(x => int.Parse(x)).ToArray();
-            for (int i = 1; i <= b.Length; i++)
-            {
-                tableaux[i][nm[1] + 1] = b[i];
-            }
+            var n = tableaux.Length - 2;
+            var m = tableaux[0].Length - 2;
+            const decimal zero = 0;
+            var solution = new string[m];
 
-            var c = input[nm[0] + 2].Split(' ').Select(x => int.Parse(x)).ToArray();
-
-            for (int j = 1; j <= c.Length; j++)
+            for (int i = 1; i <= n; i++)
             {
-                tableaux[nm[0] + 1][j] = c[j];
+                if (tableaux[i][0] <= 0) continue;
+                solution[(int)tableaux[i][0] - 1] = tableaux[i][tableaux[i].Length - 1].ToString("0.000000000000000000").Replace(",", ".");
             }
-            tableaux[nm[0] + 1][nm[1] + 1] = 0;
+            for (int j = 1; j <= m; j++)
+            {
+                if (tableaux[0][j] <= 0) continue;
+                solution[(int)tableaux[0][j] - 1] = zero.ToString("0.000000000000000000").Replace(",", ".");
+            }
+            return new string[] { "Bounded solution", string.Join(" ", solution) };
+        }
 
-            // simplex method
+        private static string[] Simplex(decimal[][] tableaux)
+        {
+            var n = tableaux.Length - 2;
+            var m = tableaux[0].Length - 2;
             while (true)
             {
                 var k = 0;
-                for (int i = 1; i <= nm[0]; i++)
+                for (int i = 1; i <= n; i++)
                 {
-                    if (tableaux[i][nm[1] + 1] < 0)
+                    if (tableaux[i][m + 1] < 0)
                     {
                         k = i; break;
                     }
@@ -84,9 +89,9 @@ namespace _3_ad_allocation
                 {
                     // case 1 b >= 0
                     var j0 = 0;
-                    for (int j = 1; j <= nm[1]; j++)
+                    for (int j = 1; j <= m; j++)
                     {
-                        if (tableaux[nm[0] + 1][j] < 0)
+                        if (tableaux[n + 1][j] < 0)
                         {
                             j0 = j; break;
                         }
@@ -94,17 +99,17 @@ namespace _3_ad_allocation
                     if (j0 == 0)
                     {
                         // we are done, bounded solution
-                        return new string[] { "Bounded solution", "" };
+                        return BoundedSolution(tableaux);
                     }
                     else
                     {
                         var minRatio = decimal.MaxValue;
                         var i0 = 0;
-                        for (int i = 1; i <= nm[0]; i++)
+                        for (int i = 1; i <= n; i++)
                         {
                             if (tableaux[i][j0] > 0)
                             {
-                                var ratio = tableaux[i][nm[1] + 1] / tableaux[i][j0];
+                                var ratio = tableaux[i][m + 1] / tableaux[i][j0];
                                 if (ratio < minRatio)
                                 {
                                     minRatio = ratio;
@@ -114,13 +119,13 @@ namespace _3_ad_allocation
                         }
                         if (i0 == 0)
                         {
-                            // infinite solution
-                            return new string[] { "Infinite" };
+                            // infinity solution
+                            return new string[] { "Infinity" };
                         }
                         else
                         {
                             // pivot around i0j0
-                            Pivot(tableaux, i0, j0);
+                            tableaux = Pivot(tableaux, i0, j0);
                         }
                     }
                 }
@@ -128,7 +133,7 @@ namespace _3_ad_allocation
                 {
                     // case 2 negative b at row k
                     var j0 = 0;
-                    for (int j = 1; j <= nm[1]; j++)
+                    for (int j = 1; j <= m; j++)
                     {
                         if (tableaux[k][j] < 0)
                         {
@@ -143,13 +148,13 @@ namespace _3_ad_allocation
                     }
                     else
                     {
-                        var minRatio = tableaux[k][nm[1] + 1] / tableaux[k][j0];
+                        var minRatio = tableaux[k][m + 1] / tableaux[k][j0];
                         var i0 = k;
-                        for (int i = 1; i <= nm[0]; i++)
+                        for (int i = 1; i <= n; i++)
                         {
-                            if (tableaux[i][nm[1] + 1] >= 0 && tableaux[i][j0] > 0)
+                            if (tableaux[i][m + 1] >= 0 && tableaux[i][j0] > 0)
                             {
-                                var ratio = tableaux[i][nm[1] + 1] / tableaux[i][j0];
+                                var ratio = tableaux[i][m + 1] / tableaux[i][j0];
                                 if (ratio < minRatio)
                                 {
                                     minRatio = ratio;
@@ -158,10 +163,46 @@ namespace _3_ad_allocation
                             }
                         }
                         // pivot around i0j0
-                        Pivot(tableaux, i0, j0);
+                        tableaux = Pivot(tableaux, i0, j0);
                     }
                 }
             }
+        }
+
+        public static string[] Solve(string[] input)
+        {
+            // init simplex tableaux
+            var nm = input[0].Split(' ').Select(x => int.Parse(x)).ToArray();
+            var tableaux = new decimal[nm[0] + 2][];
+            tableaux[0] = new decimal[nm[1] + 2];
+            for (int i = 1; i <= nm[0]; i++)
+            {
+                tableaux[i] = new decimal[nm[1] + 2];
+                tableaux[i][0] = -i; // indices of y
+                var coeff = input[i].Split(' ').Select(x => int.Parse(x)).ToArray();
+                for (int j = 1; j <= coeff.Length; j++)
+                {
+                    tableaux[0][j] = j; // indices of x
+                    tableaux[i][j] = coeff[j - 1];
+                }
+            }
+            var b = input[nm[0] + 1].Split(' ').Select(x => int.Parse(x)).ToArray();
+            for (int i = 1; i <= b.Length; i++)
+            {
+                tableaux[i][nm[1] + 1] = b[i - 1];
+            }
+
+            var c = input[nm[0] + 2].Split(' ').Select(x => int.Parse(x)).ToArray();
+
+            tableaux[nm[0] + 1] = new decimal[nm[1] + 2];
+            for (int j = 1; j <= c.Length; j++)
+            {
+                tableaux[nm[0] + 1][j] = -c[j - 1];
+            }
+            tableaux[nm[0] + 1][nm[1] + 1] = 0;
+
+            // simplex method
+            return Simplex(tableaux);
         }
 
         static void Main(string[] args)
