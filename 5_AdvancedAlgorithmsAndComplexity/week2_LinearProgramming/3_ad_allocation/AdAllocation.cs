@@ -6,12 +6,12 @@ namespace _3_ad_allocation
 {
     public static class AdAllocation
     {
-        private static decimal[][] Pivot(decimal[][] tableaux, int i0, int j0)
+        private static double[][] Pivot(double[][] tableaux, int i0, int j0)
         {
-            var newTableaux = new decimal[tableaux.Length][];
+            var newTableaux = new double[tableaux.Length][];
             for (int i = 0; i < tableaux.Length; i++)
             {
-                newTableaux[i] = new decimal[tableaux[i].Length];
+                newTableaux[i] = new double[tableaux[i].Length];
                 for (int j = 0; j < tableaux[i].Length; j++)
                 {
                     if (j == 0 || i == 0)
@@ -50,11 +50,11 @@ namespace _3_ad_allocation
             return newTableaux;
         }
 
-        private static string[] BoundedSolution(decimal[][] tableaux)
+        private static string[] BoundedSolution(double[][] tableaux)
         {
             var n = tableaux.Length - 2;
             var m = tableaux[0].Length - 2;
-            const decimal zero = 0;
+            const double zero = 0;
             var solution = new string[m];
 
             for (int i = 1; i <= n; i++)
@@ -70,8 +70,9 @@ namespace _3_ad_allocation
             return new string[] { "Bounded solution", string.Join(" ", solution) };
         }
 
-        private static string[] Simplex(decimal[][] tableaux)
+        private static string[] Simplex(double[][] tableaux)
         {
+            var rnd = new Random();
             var n = tableaux.Length - 2;
             var m = tableaux[0].Length - 2;
             while (true)
@@ -79,7 +80,7 @@ namespace _3_ad_allocation
                 var k = 0;
                 for (int i = 1; i <= n; i++)
                 {
-                    if (tableaux[i][m + 1] < 0)
+                    if (Math.Round(tableaux[i][m + 1], 9) < 0)
                     {
                         k = i; break;
                     }
@@ -91,7 +92,7 @@ namespace _3_ad_allocation
                     var j0 = 0;
                     for (int j = 1; j <= m; j++)
                     {
-                        if (tableaux[n + 1][j] < 0)
+                        if (Math.Round(tableaux[n + 1][j], 9) < 0)
                         {
                             j0 = j; break;
                         }
@@ -103,21 +104,25 @@ namespace _3_ad_allocation
                     }
                     else
                     {
-                        var minRatio = decimal.MaxValue;
-                        var i0 = 0;
+                        var minRatio = double.MaxValue;
+                        var i0list = new List<int>();
                         for (int i = 1; i <= n; i++)
                         {
-                            if (tableaux[i][j0] > 0)
+                            if (Math.Round(tableaux[i][j0], 9) > 0)
                             {
-                                var ratio = tableaux[i][m + 1] / tableaux[i][j0];
+                                var ratio = Math.Round(tableaux[i][m + 1] / tableaux[i][j0], 9);
                                 if (ratio < minRatio)
                                 {
                                     minRatio = ratio;
-                                    i0 = i;
+                                    i0list = new List<int>() { i };
+                                }
+                                else if (ratio == minRatio)
+                                {
+                                    i0list.Add(i);
                                 }
                             }
                         }
-                        if (i0 == 0)
+                        if (i0list.Count == 0)
                         {
                             // infinity solution
                             return new string[] { "Infinity" };
@@ -125,6 +130,7 @@ namespace _3_ad_allocation
                         else
                         {
                             // pivot around i0j0
+                            var i0 = i0list[rnd.Next(1000) % i0list.Count];
                             tableaux = Pivot(tableaux, i0, j0);
                         }
                     }
@@ -133,9 +139,9 @@ namespace _3_ad_allocation
                 {
                     // case 2 negative b at row k
                     var j0 = 0;
-                    for (int j = 1; j <= m; j++)
+                    for (int j = m; j >= 1; j--)
                     {
-                        if (tableaux[k][j] < 0)
+                        if (Math.Round(tableaux[k][j], 9) < 0)
                         {
                             j0 = j;
                             break;
@@ -148,21 +154,26 @@ namespace _3_ad_allocation
                     }
                     else
                     {
-                        var minRatio = tableaux[k][m + 1] / tableaux[k][j0];
-                        var i0 = k;
+                        var minRatio = Math.Round(tableaux[k][m + 1] / tableaux[k][j0], 9);
+                        var i0list = new List<int>() { k };
                         for (int i = 1; i <= n; i++)
                         {
-                            if (tableaux[i][m + 1] >= 0 && tableaux[i][j0] > 0)
+                            if (Math.Round(tableaux[i][m + 1], 9) >= 0 && Math.Round(tableaux[i][j0], 9) > 0)
                             {
-                                var ratio = tableaux[i][m + 1] / tableaux[i][j0];
+                                var ratio = Math.Round(tableaux[i][m + 1] / tableaux[i][j0], 9);
                                 if (ratio < minRatio)
                                 {
                                     minRatio = ratio;
-                                    i0 = i;
+                                    i0list = new List<int>() { i };
+                                }
+                                else if (ratio == minRatio)
+                                {
+                                    i0list.Add(i);
                                 }
                             }
                         }
                         // pivot around i0j0
+                        var i0 = i0list[rnd.Next(1000) % i0list.Count];
                         tableaux = Pivot(tableaux, i0, j0);
                     }
                 }
@@ -173,11 +184,11 @@ namespace _3_ad_allocation
         {
             // init simplex tableaux
             var nm = input[0].Split(' ').Select(x => int.Parse(x)).ToArray();
-            var tableaux = new decimal[nm[0] + 2][];
-            tableaux[0] = new decimal[nm[1] + 2];
+            var tableaux = new double[nm[0] + 2][];
+            tableaux[0] = new double[nm[1] + 2];
             for (int i = 1; i <= nm[0]; i++)
             {
-                tableaux[i] = new decimal[nm[1] + 2];
+                tableaux[i] = new double[nm[1] + 2];
                 tableaux[i][0] = -i; // indices of y
                 var coeff = input[i].Split(' ').Select(x => int.Parse(x)).ToArray();
                 for (int j = 1; j <= coeff.Length; j++)
@@ -194,7 +205,7 @@ namespace _3_ad_allocation
 
             var c = input[nm[0] + 2].Split(' ').Select(x => int.Parse(x)).ToArray();
 
-            tableaux[nm[0] + 1] = new decimal[nm[1] + 2];
+            tableaux[nm[0] + 1] = new double[nm[1] + 2];
             for (int j = 1; j <= c.Length; j++)
             {
                 tableaux[nm[0] + 1][j] = -c[j - 1];
