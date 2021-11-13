@@ -39,7 +39,15 @@ namespace Tests
             {
                 var input = File.ReadAllLines(file);
                 var answer = File.ReadAllLines($"{file}.a");
+                if (answer.Length > 1)
+                {
+                    answer[1] = string.Join(" ", answer[1].Split(' ').Select(x => x.IndexOf('.') >= 0 ? x.Substring(0, x.IndexOf('.') + 15) : x));
+                }
                 var result = Diet.Solve(input);
+                if (result.Length > 1)
+                {
+                    result[1] = string.Join(" ", answer[1].Split(' ').Select(x => x.IndexOf('.') >= 0 ? x.Substring(0, x.IndexOf('.') + 15) : x));
+                }
                 Assert.Equal(answer, result);
             }
         }

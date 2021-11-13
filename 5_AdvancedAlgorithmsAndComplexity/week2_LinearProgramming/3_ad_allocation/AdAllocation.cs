@@ -80,7 +80,7 @@ namespace _3_ad_allocation
                 var k = 0;
                 for (int i = 1; i <= n; i++)
                 {
-                    if (Math.Round(tableaux[i][m + 1], 9) < 0)
+                    if (Math.Round(tableaux[i][m + 1], 5) < 0)
                     {
                         k = i; break;
                     }
@@ -92,25 +92,27 @@ namespace _3_ad_allocation
                     var j0 = 0;
                     for (int j = 1; j <= m; j++)
                     {
-                        if (Math.Round(tableaux[n + 1][j], 9) < 0)
+                        // find negative -c in last row
+                        if (Math.Round(tableaux[n + 1][j], 5) < 0)
                         {
                             j0 = j; break;
                         }
                     }
                     if (j0 == 0)
                     {
-                        // we are done, bounded solution
+                        // if all -c are positive, we are done, it's bounded solution
                         return BoundedSolution(tableaux);
                     }
                     else
                     {
+                        // choose row(s) with minimum b/a ratio
                         var minRatio = double.MaxValue;
                         var i0list = new List<int>();
                         for (int i = 1; i <= n; i++)
                         {
-                            if (Math.Round(tableaux[i][j0], 9) > 0)
+                            if (Math.Round(tableaux[i][j0], 5) > 0)
                             {
-                                var ratio = Math.Round(tableaux[i][m + 1] / tableaux[i][j0], 9);
+                                var ratio = Math.Round(tableaux[i][m + 1] / tableaux[i][j0], 5);
                                 if (ratio < minRatio)
                                 {
                                     minRatio = ratio;
@@ -124,12 +126,12 @@ namespace _3_ad_allocation
                         }
                         if (i0list.Count == 0)
                         {
-                            // infinity solution
+                            // no pivots, it's unbounded solution
                             return new string[] { "Infinity" };
                         }
                         else
                         {
-                            // pivot around i0j0
+                            // choose random pivot from candidates
                             var i0 = i0list[rnd.Next(1000) % i0list.Count];
                             tableaux = Pivot(tableaux, i0, j0);
                         }
@@ -139,9 +141,10 @@ namespace _3_ad_allocation
                 {
                     // case 2 negative b at row k
                     var j0 = 0;
+                    // find negative element in row k
                     for (int j = m; j >= 1; j--)
                     {
-                        if (Math.Round(tableaux[k][j], 9) < 0)
+                        if (Math.Round(tableaux[k][j], 5) < 0)
                         {
                             j0 = j;
                             break;
@@ -149,18 +152,19 @@ namespace _3_ad_allocation
                     }
                     if (j0 == 0)
                     {
-                        // no solution
+                        // all elements in row k are positive, but b is negative, there's no solution
                         return new string[] { "No solution" };
                     }
                     else
                     {
-                        var minRatio = Math.Round(tableaux[k][m + 1] / tableaux[k][j0], 9);
+                        // find pivot candidates with minimum b/a ratio
+                        var minRatio = Math.Round(tableaux[k][m + 1] / tableaux[k][j0], 5);
                         var i0list = new List<int>() { k };
                         for (int i = 1; i <= n; i++)
                         {
-                            if (Math.Round(tableaux[i][m + 1], 9) >= 0 && Math.Round(tableaux[i][j0], 9) > 0)
+                            if (Math.Round(tableaux[i][m + 1], 5) >= 0 && Math.Round(tableaux[i][j0], 5) > 0)
                             {
-                                var ratio = Math.Round(tableaux[i][m + 1] / tableaux[i][j0], 9);
+                                var ratio = Math.Round(tableaux[i][m + 1] / tableaux[i][j0], 5);
                                 if (ratio < minRatio)
                                 {
                                     minRatio = ratio;
@@ -172,7 +176,7 @@ namespace _3_ad_allocation
                                 }
                             }
                         }
-                        // pivot around i0j0
+                        // choose random pivot from candidates
                         var i0 = i0list[rnd.Next(1000) % i0list.Count];
                         tableaux = Pivot(tableaux, i0, j0);
                     }
@@ -197,14 +201,16 @@ namespace _3_ad_allocation
                     tableaux[i][j] = coeff[j - 1];
                 }
             }
+
+            // last column b
             var b = input[nm[0] + 1].Split(' ').Select(x => int.Parse(x)).ToArray();
             for (int i = 1; i <= b.Length; i++)
             {
                 tableaux[i][nm[1] + 1] = b[i - 1];
             }
 
+            // last row -c
             var c = input[nm[0] + 2].Split(' ').Select(x => int.Parse(x)).ToArray();
-
             tableaux[nm[0] + 1] = new double[nm[1] + 2];
             for (int j = 1; j <= c.Length; j++)
             {

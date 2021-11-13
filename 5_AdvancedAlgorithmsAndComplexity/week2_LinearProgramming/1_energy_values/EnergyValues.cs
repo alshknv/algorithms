@@ -5,11 +5,11 @@ namespace _1_energy_values
 {
     public static class EnergyValues
     {
-        private static void SwapToTop(double[][] matrix, int i)
+        private static void Swap(double[][] matrix, int s, int t)
         {
-            var buf = matrix[0];
-            matrix[0] = matrix[i];
-            matrix[i] = buf;
+            var buf = matrix[t];
+            matrix[t] = matrix[s];
+            matrix[s] = buf;
         }
 
         private static void Scale(double[][] matrix, int row, int pivCf)
@@ -55,11 +55,11 @@ namespace _1_energy_values
             {
                 for (int i = c; i < matrix.Length; i++)
                 {
-                    if ((c == 0 || (c > 0 && matrix[i][c - 1] == 0)) && matrix[i][c] != 0)
+                    if (Math.Round(matrix[i][c], 5) != 0)
                     {
-                        SwapToTop(matrix, i);
-                        Scale(matrix, 0, c);
-                        Eliminate(matrix, 0, c);
+                        Swap(matrix, i, c);
+                        Scale(matrix, c, c);
+                        Eliminate(matrix, c, c);
                         break;
                     }
                 }
