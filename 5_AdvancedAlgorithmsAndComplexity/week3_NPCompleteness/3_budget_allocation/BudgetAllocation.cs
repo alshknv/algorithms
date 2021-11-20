@@ -22,10 +22,13 @@ namespace _3_budget_allocation
             var nm = input[0].Split(' ').Select(x => int.Parse(x)).ToArray();
             var n = nm[0];
             var m = nm[1];
-            var matrix = new int[n][];
+            var A = new int[n][];
             for (int i = 1; i <= n; i++)
             {
-                matrix[i - 1] = input[i].Split(' ').Select(x => int.Parse(x)).ToArray();
+                A[i - 1] = new int[m];
+                var a = input[i].Split(' ');
+                for (int j = 0; j < a.Length; j++)
+                    A[i - 1][j] = int.Parse(a[j]);
             }
             var b = input[n + 1].Split(' ').Select(x => int.Parse(x)).ToArray();
 
@@ -37,7 +40,7 @@ namespace _3_budget_allocation
                 var coeffs = new List<int>();
                 for (int j = 0; j < m; j++)
                 {
-                    if (matrix[i][j] != 0) coeffs.Add(j);
+                    if (A[i][j] != 0) coeffs.Add(j);
                     if (coeffs.Count == 3) break;
                 }
                 //check any possible assignment of 3 vars to falsify inequality
@@ -47,7 +50,7 @@ namespace _3_budget_allocation
                     var sum = 0;
                     for (int l = 0; l < binary.Length; l++)
                     {
-                        sum += matrix[i][coeffs[l]] * binary[l];
+                        sum += A[i][coeffs[l]] * binary[l];
                     }
                     if (sum > b[i])
                     {

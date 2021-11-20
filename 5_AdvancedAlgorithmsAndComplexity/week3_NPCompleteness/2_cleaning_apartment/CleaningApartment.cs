@@ -68,11 +68,14 @@ namespace _2_cleaning_apartment
                 {
                     if (edgeMatrix[i][j])
                     {
-                        //no edge between i and j, add clause
+                        //no edge between i and j, add clauses
                         for (int k = 1; k <= n; k++)
                         {
                             if (k + 1 <= n)
+                            {
                                 output.Add(new int[3] { -varMatrix[i][k], -varMatrix[j][k + 1], 0 });
+                                output.Add(new int[3] { -varMatrix[j][k], -varMatrix[i][k + 1], 0 });
+                            }
                         }
                     }
                 }
