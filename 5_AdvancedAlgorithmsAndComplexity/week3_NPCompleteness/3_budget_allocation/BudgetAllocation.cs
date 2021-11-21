@@ -17,23 +17,35 @@ namespace _3_budget_allocation
             return result;
         }
 
+        private static List<int[]> SatClauses()
+        {
+            return new List<int[]>() { new int[2] { 1, 1 }, new int[3] { 1, -1, 0 } };
+        }
+
+        private static List<int[]> UnsatClauses()
+        {
+            return new List<int[]>() { new int[2] { 2, 1 }, new int[2] { 1, 0 }, new int[2] { -1, 0 } };
+        }
+
         public static string[] Solve(string[] input)
         {
             var nm = input[0].Split(' ').Select(x => int.Parse(x)).ToArray();
             var n = nm[0];
             var m = nm[1];
+
+            if (n < 1 || m < 1)
+            {
+                return new string[0];
+            }
+
             var A = new int[n][];
             for (int i = 1; i <= n; i++)
             {
-                A[i - 1] = new int[m];
-                var a = input[i].Split(' ');
-                for (int j = 0; j < a.Length; j++)
-                    A[i - 1][j] = int.Parse(a[j]);
+                A[i - 1] = input[i].Split(' ').Select(x => int.Parse(x)).ToArray();
             }
             var b = input[n + 1].Split(' ').Select(x => int.Parse(x)).ToArray();
 
-            var output = new List<int[]>();
-            output.Add(new int[2] { 0, m });
+            var output = new List<int[]>() { new int[2] { 0, m } };
 
             for (int i = 0; i < n; i++)
             {
@@ -41,9 +53,14 @@ namespace _3_budget_allocation
                 for (int j = 0; j < m; j++)
                 {
                     if (A[i][j] != 0) coeffs.Add(j);
-                    if (coeffs.Count == 3) break;
                 }
-                //check any possible assignment of 3 vars to falsify inequality
+                if (coeffs.Count == 0 && b[i] < 0)
+                {
+                    output = UnsatClauses();
+                    break;
+                }
+                //check any possible assignment of 3 vars
+                var clauseCount = 0;
                 for (int k = 0; k < Math.Pow(2, coeffs.Count); k++)
                 {
                     var binary = ToBinary(k, coeffs.Count);
@@ -56,6 +73,12 @@ namespace _3_budget_allocation
                     {
                         // inequality falsified, add clause
                         var clause = new int[binary.Length + 1];
+                        clauseCount++;
+                        if (clauseCount == Math.Pow(2, coeffs.Count))
+                        {
+                            output = UnsatClauses();
+                            break;
+                        }
                         for (var y = 0; y < binary.Length; y++)
                         {
                             clause[y] = (binary[y] > 0 ? -1 : 1) * (coeffs[y] + 1);
@@ -64,7 +87,13 @@ namespace _3_budget_allocation
                     }
                 }
             }
+
             output[0][0] = output.Count - 1;
+            if (output.Count == 1)
+            {
+                output = SatClauses();
+            }
+
             return output.Select(x => string.Join(" ", x)).ToArray();
         }
 
