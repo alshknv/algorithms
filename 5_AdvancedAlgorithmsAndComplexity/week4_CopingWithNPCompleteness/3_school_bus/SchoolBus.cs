@@ -66,7 +66,7 @@ namespace _3_school_bus
                 }
             }
 
-            for (int i = 1; i <= included.Length; i++)
+            for (int i = 1; i < included.Length; i++)
             {
                 if (!included[i])
                 {
@@ -74,6 +74,8 @@ namespace _3_school_bus
                     break;
                 }
             }
+
+            if (prev[0] == 0) return new string[] { "-1" };
 
             return new string[] {
                 (c[c.Length - 1] + matrix[prev[0], prev[1]]).ToString(),
