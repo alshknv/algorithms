@@ -75,7 +75,6 @@ namespace _1_circuit_design
             while (vertexStack.Count > 0)
             {
                 var ve = vertexStack.Peek();
-                /**/
 
                 implicationGraph[ve].Visited = true;
                 if (implicationGraph[ve].CurrentEdge >= implicationGraph[ve].Edges.Length)
