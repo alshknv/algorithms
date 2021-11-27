@@ -144,7 +144,7 @@ namespace _1_circuit_design
             }
 
             // finding strongly connected components
-            var postInfo = implicationGraph.Select((vrt, i) => new KeyValuePair<int, int?>(i, vrt?.PostVisit)).ToArray();
+            var postInfo = implicationGraph.Select((vrt, i) => new KeyValuePair<int, int?>(i, vrt.PostVisit)).ToArray();
             Array.Sort(postInfo, (p1, p2) =>
             {
                 if (p1.Value == null) return -1;
@@ -176,7 +176,8 @@ namespace _1_circuit_design
             {
                 input[i] = Console.ReadLine();
             }
-            Console.WriteLine(Solve(input));
+            foreach (var line in Solve(input))
+                Console.WriteLine(line);
         }
     }
 }

@@ -38,8 +38,8 @@ namespace _2_plan_party
             var root = 0;
             for (int i = 1; i < employees.Length; i++)
             {
-                // arbitrarily select root that has only one connection
-                if (employees[i].Linked.Count == 1)
+                // arbitrarily select root that has at most one connection
+                if (employees[i].Linked.Count <= 1)
                 {
                     stack.Push(i);
                     root = i;

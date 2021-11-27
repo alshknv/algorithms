@@ -37,6 +37,13 @@ namespace _4_reschedule_exams
 
     public static class RescheduleExams
     {
+        private enum RgbEnum
+        {
+            R = 0,
+            G = 1,
+            B = 2
+        }
+
         private static ImplicationVertex[] implicationGraph;
         private static bool?[] assignment;
 
@@ -110,9 +117,9 @@ namespace _4_reschedule_exams
             var nm = input[0].Split(' ').Select(x => int.Parse(x)).ToArray();
             var rgb = input[1];
 
-            var x = nm[0] * 3;
-            implicationGraph = new ImplicationVertex[x * 2 + 1];
-            assignment = new bool?[x * 2 + 1];
+            var N = nm[0] * 3;
+            implicationGraph = new ImplicationVertex[N * 2 + 1];
+            assignment = new bool?[N * 2 + 1];
 
             for (int i = 0; i < implicationGraph.Length; i++)
                 implicationGraph[i] = new ImplicationVertex();
@@ -136,37 +143,37 @@ namespace _4_reschedule_exams
                 }
 
                 // vertex must change color
-                implicationGraph[x + (varIdx[0] * nm[0] + j)].EdgesHash.Add(x - (varIdx[0] * nm[0] + j));
-                implicationGraph[x - (varIdx[0] * nm[0] + j)].EdgesHashR.Add(x + (varIdx[0] * nm[0] + j));
+                implicationGraph[N + (varIdx[0] * nm[0] + j)].EdgesHash.Add(N - (varIdx[0] * nm[0] + j));
+                implicationGraph[N - (varIdx[0] * nm[0] + j)].EdgesHashR.Add(N + (varIdx[0] * nm[0] + j));
 
                 // vertex must have one of other colors
-                implicationGraph[x - (varIdx[1] * nm[0] + j)].EdgesHash.Add(x + (varIdx[2] * nm[0] + j));
-                implicationGraph[x + (varIdx[2] * nm[0] + j)].EdgesHashR.Add(x - (varIdx[1] * nm[0] + j));
-                implicationGraph[x - (varIdx[2] * nm[0] + j)].EdgesHash.Add(x + (varIdx[1] * nm[0] + j));
-                implicationGraph[x + (varIdx[1] * nm[0] + j)].EdgesHashR.Add(x - (varIdx[2] * nm[0] + j));
+                implicationGraph[N - (varIdx[1] * nm[0] + j)].EdgesHash.Add(N + (varIdx[2] * nm[0] + j));
+                implicationGraph[N + (varIdx[2] * nm[0] + j)].EdgesHashR.Add(N - (varIdx[1] * nm[0] + j));
+                implicationGraph[N - (varIdx[2] * nm[0] + j)].EdgesHash.Add(N + (varIdx[1] * nm[0] + j));
+                implicationGraph[N + (varIdx[1] * nm[0] + j)].EdgesHashR.Add(N - (varIdx[2] * nm[0] + j));
 
                 // vertex must have only one of other colors
-                implicationGraph[x + (varIdx[1] * nm[0] + j)].EdgesHash.Add(x - (varIdx[2] * nm[0] + j));
-                implicationGraph[x - (varIdx[2] * nm[0] + j)].EdgesHashR.Add(x + (varIdx[1] * nm[0] + j));
-                implicationGraph[x + (varIdx[2] * nm[0] + j)].EdgesHash.Add(x - (varIdx[1] * nm[0] + j));
-                implicationGraph[x - (varIdx[1] * nm[0] + j)].EdgesHashR.Add(x + (varIdx[2] * nm[0] + j));
+                implicationGraph[N + (varIdx[1] * nm[0] + j)].EdgesHash.Add(N - (varIdx[2] * nm[0] + j));
+                implicationGraph[N - (varIdx[2] * nm[0] + j)].EdgesHashR.Add(N + (varIdx[1] * nm[0] + j));
+                implicationGraph[N + (varIdx[2] * nm[0] + j)].EdgesHash.Add(N - (varIdx[1] * nm[0] + j));
+                implicationGraph[N - (varIdx[1] * nm[0] + j)].EdgesHashR.Add(N + (varIdx[2] * nm[0] + j));
             }
             for (int i = 2; i < input.Length; i++)
             {
                 var edge = input[i].Split(' ').Select(x => int.Parse(x)).ToArray();
-                implicationGraph[x + edge[0]].EdgesHash.Add(x - edge[1]);
-                implicationGraph[x - edge[1]].EdgesHashR.Add(x + edge[0]);
-                implicationGraph[x + edge[1]].EdgesHash.Add(x - edge[0]);
-                implicationGraph[x - edge[0]].EdgesHashR.Add(x + edge[1]);
+                implicationGraph[N + edge[0]].EdgesHash.Add(N - edge[1]);
+                implicationGraph[N - edge[1]].EdgesHashR.Add(N + edge[0]);
+                implicationGraph[N + edge[1]].EdgesHash.Add(N - edge[0]);
+                implicationGraph[N - edge[0]].EdgesHashR.Add(N + edge[1]);
 
-                implicationGraph[x + nm[0] + edge[0]].EdgesHash.Add(x - (nm[0] + edge[1]));
-                implicationGraph[x - (nm[0] + edge[1])].EdgesHashR.Add(x + nm[0] + edge[0]);
-                implicationGraph[x + nm[0] + edge[1]].EdgesHash.Add(x - (nm[0] + edge[0]));
-                implicationGraph[x - (nm[0] + edge[0])].EdgesHashR.Add(x + nm[0] + edge[1]);
-                implicationGraph[x + nm[0] * 2 + edge[0]].EdgesHash.Add(x - (nm[0] * 2 + edge[1]));
-                implicationGraph[x - (nm[0] * 2 + edge[1])].EdgesHashR.Add(x + nm[0] * 2 + edge[0]);
-                implicationGraph[x + nm[0] * 2 + edge[1]].EdgesHash.Add(x - (nm[0] * 2 + edge[0]));
-                implicationGraph[x - (nm[0] * 2 + edge[0])].EdgesHashR.Add(x + nm[0] * 2 + edge[1]);
+                implicationGraph[N + nm[0] + edge[0]].EdgesHash.Add(N - (nm[0] + edge[1]));
+                implicationGraph[N - (nm[0] + edge[1])].EdgesHashR.Add(N + nm[0] + edge[0]);
+                implicationGraph[N + nm[0] + edge[1]].EdgesHash.Add(N - (nm[0] + edge[0]));
+                implicationGraph[N - (nm[0] + edge[0])].EdgesHashR.Add(N + nm[0] + edge[1]);
+                implicationGraph[N + nm[0] * 2 + edge[0]].EdgesHash.Add(N - (nm[0] * 2 + edge[1]));
+                implicationGraph[N - (nm[0] * 2 + edge[1])].EdgesHashR.Add(N + nm[0] * 2 + edge[0]);
+                implicationGraph[N + nm[0] * 2 + edge[1]].EdgesHash.Add(N - (nm[0] * 2 + edge[0]));
+                implicationGraph[N - (nm[0] * 2 + edge[0])].EdgesHashR.Add(N + nm[0] * 2 + edge[1]);
             }
 
             // DFS reversed graph to get postvisit indexes
@@ -183,7 +190,7 @@ namespace _4_reschedule_exams
             }
 
             // finding strongly connected components
-            var postInfo = implicationGraph.Select((vrt, i) => new KeyValuePair<int, int?>(i, vrt?.PostVisit)).ToArray();
+            var postInfo = implicationGraph.Select((vrt, i) => new KeyValuePair<int, int?>(i, vrt.PostVisit)).ToArray();
             Array.Sort(postInfo, (p1, p2) =>
             {
                 if (p1.Value == null) return -1;
@@ -201,19 +208,24 @@ namespace _4_reschedule_exams
                 }
                 iv++;
             }
-            return "";
+
+            var rearrangement = new char[nm[0]];
+            for (int c = 0; c < nm[0]; c++)
+            {
+                for (RgbEnum color = RgbEnum.R; color <= RgbEnum.B; color++)
+                {
+                    if ((bool)assignment[N + 1 + ((int)color * nm[0]) + c])
+                    {
+                        rearrangement[c] = color.ToString()[0];
+                        break;
+                    }
+                }
+            }
+            return new string(rearrangement);
         }
 
         static void Main(string[] args)
         {
-            var gg = Solve(new string[] {"4 5",
-"RRRG",
-"1 3",
-"1 4",
-"3 4",
-"2 4",
-"2 3"});
-            return;
             var nmline = Console.ReadLine();
             var m = int.Parse(nmline.Split(' ').Last());
             var input = new string[m + 2];
