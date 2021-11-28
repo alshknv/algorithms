@@ -22,6 +22,54 @@ namespace Tests
         }
 
         [Fact]
+        public void Example2()
+        {
+            Assert.Collection(SchoolBus.Solve(new string[] {
+                "4 6",
+                "1 2 1",
+                "2 3 5",
+                "1 3 1",
+                "1 4 10",
+                "2 4 2",
+                "3 4 3"
+            }),
+            l1 => Assert.Equal("7", l1),
+            l2 => Assert.Equal("1 3 4 2", l2));
+        }
+
+        [Fact]
+        public void Triangle()
+        {
+            Assert.Collection(SchoolBus.Solve(new string[] {
+                "3 3",
+                "1 2 1",
+                "2 3 1",
+                "1 3 1"
+            }),
+            l1 => Assert.Equal("3", l1),
+            l2 => Assert.Equal("1 3 2", l2));
+        }
+
+        [Fact]
+        public void SingleVertex()
+        {
+            Assert.Collection(SchoolBus.Solve(new string[] {
+                "1 0"
+            }),
+            l1 => Assert.Equal("-1", l1));
+        }
+
+        [Fact]
+        public void TwoVertices()
+        {
+            Assert.Collection(SchoolBus.Solve(new string[] {
+                "2 1",
+                "1 2 1"
+            }),
+            l1 => Assert.Equal("-1", l1));
+        }
+
+        [Fact]
         public void NoPath()
         {
             Assert.Collection(SchoolBus.Solve(new string[] {
@@ -32,6 +80,67 @@ namespace Tests
                 "4 2 1"
             }),
             l1 => Assert.Equal("-1", l1));
+        }
+
+        [Fact]
+        public void ExtraTest1()
+        {
+            Assert.Collection(SchoolBus.Solve(new string[] {
+                "4 4",
+                "1 3 6",
+                "1 4 2",
+                "2 3 6",
+                "2 4 2"
+            }),
+            l1 => Assert.Equal("16", l1),
+            l2 => Assert.Equal("1 3 2 4", l2)); // 1 4 2 3
+        }
+
+        [Fact]
+        public void ExtraTest2()
+        {
+            Assert.Collection(SchoolBus.Solve(new string[] {
+                "4 4",
+                "1 2 1",
+                "1 4 2",
+                "2 3 2",
+                "3 4 6"
+            }),
+            l1 => Assert.Equal("11", l1),
+            l2 => Assert.Equal("1 2 3 4", l2)); // 1 4 3 2
+        }
+
+        [Fact]
+        public void ExtraTest3()
+        {
+            Assert.Collection(SchoolBus.Solve(new string[] {
+                "5 6",
+                "1 2 3",
+                "1 3 1",
+                "1 5 5",
+                "2 5 9",
+                "3 4 8",
+                "4 5 5"
+            }),
+            l1 => Assert.Equal("26", l1),
+            l2 => Assert.Equal("1 2 5 4 3", l2)); // 1 3 4 5 2
+        }
+
+        [Fact]
+        public void ExtraTest4()
+        {
+            Assert.Collection(SchoolBus.Solve(new string[] {
+                "5 7",
+                "1 2 1",
+                "1 4 9",
+                "2 4 1",
+                "2 5 9",
+                "3 4 6",
+                "3 5 8",
+                "4 5 1"
+            }),
+            l1 => Assert.Equal("33", l1),
+            l2 => Assert.Equal("1 2 5 3 4", l2)); // 1 4 3 5 2
         }
     }
 }
