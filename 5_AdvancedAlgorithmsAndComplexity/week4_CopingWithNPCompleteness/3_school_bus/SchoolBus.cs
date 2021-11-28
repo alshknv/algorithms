@@ -43,11 +43,9 @@ namespace _3_school_bus
         {
             var n2 = (int)Math.Pow(2, n);
             var c = new int[n2][];
-            var prev = new int[n2][];
 
             foreach (var setInit in SetsNk(n, 1))
             {
-                prev[setInit.Key] = new int[2] { int.MaxValue, -1 };
                 c[setInit.Key] = new int[n + 1];
             }
 
@@ -56,7 +54,6 @@ namespace _3_school_bus
                 foreach (var setCur in SetsNk(n, k))
                 {
                     c[setCur.Key] = new int[n];
-                    prev[setCur.Key] = new int[2] { int.MaxValue, -1 };
                     c[setCur.Key][0] = int.MaxValue;
                     for (int i = 0; i < setCur.Value.Length; i++)
                     {
@@ -71,11 +68,6 @@ namespace _3_school_bus
                                 if (pathLen > 0 && pathLen < c[setCur.Key][setCur.Value[i]])
                                 {
                                     c[setCur.Key][setCur.Value[i]] = pathLen;
-                                    if (pathLen < prev[setCur.Key][0])
-                                    {
-                                        prev[setCur.Key][0] = pathLen;
-                                        prev[setCur.Key][1] = setCur.Value[i];
-                                    }
                                 }
                             }
                         }
@@ -90,27 +82,38 @@ namespace _3_school_bus
                 if (matrix[i + 1, 1] > 0)
                 {
                     var path = c[c.Length - 1][i] + matrix[i + 1, 1];
-                    if (path < minPath)
+                    if (path > 0 && path < minPath)
                     {
                         minPath = path;
                         lastVertex = i;
                     }
                 }
             }
-            prev[prev.Length - 1][0] = minPath;
-            prev[prev.Length - 1][1] = lastVertex;
 
+            // reconstruct path
             var result = new int[n];
-            var rIdx = n - 1;
-            var prevIdx = prev.Length - 1;
-            while (prev[prevIdx][1] >= 0)
-            {
-                result[rIdx--] = prev[prevIdx][1] + 1;
-                prevIdx ^= (1 << prev[prevIdx][1]);
-            }
             result[0] = 1;
+            var rIdx = n - 1;
+            var cIdx = c.Length - 1;
+            var curIdx = 1;
+            var curValue = minPath;
+            while (rIdx > 0)
+            {
+                for (int i = 1; i < n; i++)
+                {
+                    if (c[cIdx][i] > 0 && c[cIdx][i] < int.MaxValue && matrix[i + 1, curIdx] + c[cIdx][i] == curValue)
+                    {
+                        curValue = c[cIdx][i];
+                        curIdx = i + 1;
+                        result[rIdx] = i + 1;
+                        cIdx ^= (1 << i);
+                        break;
+                    }
+                }
+                rIdx--;
+            }
 
-            if (minPath > 0 && minPath < int.MaxValue)
+            if (result.Length > 2 && minPath > 0 && minPath < int.MaxValue)
             {
                 return new string[] {
                     minPath.ToString(),
@@ -146,13 +149,13 @@ namespace _3_school_bus
         static void Main(string[] args)
         {
             var gg = Solve(new string[] {
-                "4 6",
-                "1 2 20",
-                "1 3 42",
-                "1 4 35",
-                "2 3 30",
-                "2 4 34",
-                "3 4 12"
+                "5 6",
+                "1 2 3",
+                "1 3 1",
+                "1 5 5",
+                "2 5 9",
+                "3 4 8",
+                "4 5 5"
             });
             return;
             var nmline = Console.ReadLine();

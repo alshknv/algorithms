@@ -93,7 +93,7 @@ namespace Tests
                 "2 4 2"
             }),
             l1 => Assert.Equal("16", l1),
-            l2 => Assert.Equal("1 3 2 4", l2)); // 1 4 2 3
+            l2 => Assert.Equal("1 4 2 3", l2));
         }
 
         [Fact]
@@ -107,7 +107,7 @@ namespace Tests
                 "3 4 6"
             }),
             l1 => Assert.Equal("11", l1),
-            l2 => Assert.Equal("1 2 3 4", l2)); // 1 4 3 2
+            l2 => Assert.Equal("1 4 3 2", l2));
         }
 
         [Fact]
@@ -123,7 +123,7 @@ namespace Tests
                 "4 5 5"
             }),
             l1 => Assert.Equal("26", l1),
-            l2 => Assert.Equal("1 2 5 4 3", l2)); // 1 3 4 5 2
+            l2 => Assert.Equal("1 3 4 5 2", l2));
         }
 
         [Fact]
@@ -140,7 +140,7 @@ namespace Tests
                 "4 5 1"
             }),
             l1 => Assert.Equal("33", l1),
-            l2 => Assert.Equal("1 2 5 3 4", l2)); // 1 4 3 5 2
+            l2 => Assert.Equal("1 4 3 5 2", l2));
         }
     }
 }
