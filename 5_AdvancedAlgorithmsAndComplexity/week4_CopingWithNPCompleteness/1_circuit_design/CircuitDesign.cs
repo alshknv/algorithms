@@ -9,28 +9,8 @@ namespace _1_circuit_design
         public bool Visited;
         public int? PreVisit;
         public int? PostVisit;
-        private int[] edges;
-        private int[] edgesR;
-        public HashSet<int> EdgesHash = new HashSet<int>();
-        public HashSet<int> EdgesHashR = new HashSet<int>();
-
-        public int[] Edges
-        {
-            get
-            {
-                if (edges == null) edges = EdgesHash.ToArray();
-                return edges;
-            }
-        }
-        public int[] EdgesR
-        {
-            get
-            {
-                if (edgesR == null) edgesR = EdgesHashR.ToArray();
-                return edgesR;
-            }
-        }
-
+        public List<int> Edges = new List<int>();
+        public List<int> EdgesR = new List<int>();
         public int CurrentEdge;
         public int CurrentEdgeR;
     }
@@ -48,12 +28,12 @@ namespace _1_circuit_design
             {
                 var vx = vertexStack.Peek();
                 if (implicationGraph[vx].PreVisit == null) implicationGraph[vx].PreVisit = counter++;
-                while (implicationGraph[vx].CurrentEdgeR < implicationGraph[vx].EdgesR.Length &&
+                while (implicationGraph[vx].CurrentEdgeR < implicationGraph[vx].EdgesR.Count &&
                         implicationGraph[implicationGraph[vx].EdgesR[implicationGraph[vx].CurrentEdgeR]].PreVisit != null)
                 {
                     implicationGraph[vx].CurrentEdgeR++;
                 }
-                if (implicationGraph[vx].CurrentEdgeR >= implicationGraph[vx].EdgesR.Length)
+                if (implicationGraph[vx].CurrentEdgeR >= implicationGraph[vx].EdgesR.Count)
                 {
                     vertexStack.Pop();
                     implicationGraph[vx].PostVisit = counter++;
@@ -77,7 +57,7 @@ namespace _1_circuit_design
                 var ve = vertexStack.Peek();
 
                 implicationGraph[ve].Visited = true;
-                if (implicationGraph[ve].CurrentEdge >= implicationGraph[ve].Edges.Length)
+                if (implicationGraph[ve].CurrentEdge >= implicationGraph[ve].Edges.Count)
                 {
                     ve = vertexStack.Pop();
                     var varIdx = Math.Abs(ve - id0) - 1;
@@ -91,12 +71,12 @@ namespace _1_circuit_design
                 }
                 else
                 {
-                    while (implicationGraph[ve].CurrentEdge < implicationGraph[ve].Edges.Length &&
+                    while (implicationGraph[ve].CurrentEdge < implicationGraph[ve].Edges.Count &&
                         implicationGraph[implicationGraph[ve].Edges[implicationGraph[ve].CurrentEdge]].Visited)
                     {
                         implicationGraph[ve].CurrentEdge++;
                     }
-                    if (implicationGraph[ve].CurrentEdge < implicationGraph[ve].Edges.Length)
+                    if (implicationGraph[ve].CurrentEdge < implicationGraph[ve].Edges.Count)
                     {
                         vertexStack.Push(implicationGraph[ve].Edges[implicationGraph[ve].CurrentEdge]);
                     }
@@ -118,15 +98,15 @@ namespace _1_circuit_design
                 var clause = input[i].Split(' ').Select(x => int.Parse(x)).ToArray();
                 if (clause.Length == 1)
                 {
-                    implicationGraph[vc[0] - clause[0]].EdgesHash.Add(vc[0] + clause[0]);
-                    implicationGraph[vc[0] + clause[0]].EdgesHashR.Add(vc[0] - clause[0]);
+                    implicationGraph[vc[0] - clause[0]].Edges.Add(vc[0] + clause[0]);
+                    implicationGraph[vc[0] + clause[0]].EdgesR.Add(vc[0] - clause[0]);
                 }
                 else
                 {
-                    implicationGraph[vc[0] - clause[0]].EdgesHash.Add(vc[0] + clause[1]);
-                    implicationGraph[vc[0] + clause[1]].EdgesHashR.Add(vc[0] - clause[0]);
-                    implicationGraph[vc[0] - clause[1]].EdgesHash.Add(vc[0] + clause[0]);
-                    implicationGraph[vc[0] + clause[0]].EdgesHashR.Add(vc[0] - clause[1]);
+                    implicationGraph[vc[0] - clause[0]].Edges.Add(vc[0] + clause[1]);
+                    implicationGraph[vc[0] + clause[1]].EdgesR.Add(vc[0] - clause[0]);
+                    implicationGraph[vc[0] - clause[1]].Edges.Add(vc[0] + clause[0]);
+                    implicationGraph[vc[0] + clause[0]].EdgesR.Add(vc[0] - clause[1]);
                 }
             }
 
