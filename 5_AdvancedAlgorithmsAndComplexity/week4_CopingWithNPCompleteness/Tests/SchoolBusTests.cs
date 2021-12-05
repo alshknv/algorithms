@@ -51,22 +51,14 @@ namespace Tests
         }
 
         [Fact]
-        public void SingleVertex()
-        {
-            Assert.Collection(SchoolBus.Solve(new string[] {
-                "1 0"
-            }),
-            l1 => Assert.Equal("-1", l1));
-        }
-
-        [Fact]
         public void TwoVertices()
         {
             Assert.Collection(SchoolBus.Solve(new string[] {
                 "2 1",
                 "1 2 1"
             }),
-            l1 => Assert.Equal("-1", l1));
+            l1 => Assert.Equal("2", l1),
+            l2 => Assert.Equal("1 2", l2));
         }
 
         [Fact]
@@ -141,6 +133,42 @@ namespace Tests
             }),
             l1 => Assert.Equal("33", l1),
             l2 => Assert.Equal("1 4 3 5 2", l2));
+        }
+
+        [Fact]
+        public void Line()
+        {
+            Assert.Collection(SchoolBus.Solve(new string[] {
+                "3 2",
+                "1 2 1",
+                "2 3 2"
+            }),
+            l1 => Assert.Equal("-1", l1));
+        }
+
+        [Fact]
+        public void Hexagon()
+        {
+            Assert.Collection(SchoolBus.Solve(new string[] {
+                "6 15",
+                "1 2 12",
+                "1 3 29",
+                "1 4 22",
+                "1 5 13",
+                "1 6 24",
+                "2 3 19",
+                "2 4 3",
+                "2 5 25",
+                "2 6 6",
+                "3 4 21",
+                "3 5 23",
+                "3 6 28",
+                "4 5 4",
+                "4 6 5",
+                "5 6 16"
+            }),
+            l1 => Assert.Equal("76", l1),
+            l2 => Assert.Equal("1 5 4 6 2 3", l2));
         }
     }
 }

@@ -6,67 +6,132 @@ namespace _3_school_bus
 {
     public static class SchoolBus
     {
-        private static Dictionary<int, int[]> SetsNk(int n, int k)
-        {
-            var result = new Dictionary<int, int[]>();
-            var len = (int)Math.Pow(2, n);
-            for (int i = 0; i < len; i++)
-            {
-                var v = i;
-                var set = new List<int>();
-                var count = 0;
-                while (v > 0)
-                {
-                    count++;
-                    set.Add((int)Math.Log((v ^ (v - 1)) + 1, 2) - 1);
-                    v &= v - 1;
-                }
-                if (count == k)
-                    result.Add(i, set.ToArray());
-            }
+        private readonly static long[] fact = new long[20];
+        private readonly static long[] pow2 = new long[20];
 
-            return result;
+        private static long BitValue(int[] bits)
+        {
+            long value = 0;
+            for (int i = 0; i < bits.Length; i++)
+            {
+                value += bits[i] * pow2[i];
+            }
+            return value;
         }
 
-        private static int[] SetBits(int value)
+        private static bool MoveBit(int[] bits, int p)
         {
-            var set = new List<int>();
-            while (value > 0)
+            if (p + 1 < bits.Length && bits[p + 1] == 0 && bits[p] == 1)
             {
-                set.Add((int)Math.Log((value ^ (value - 1)) + 1, 2) - 1);
-                value &= value - 1;
+                bits[p + 1] = 1;
+                bits[p] = 0;
+                return true;
             }
-            return set.ToArray();
+            return false;
+        }
+
+        private static void ShiftBitsToRight(int[] bits, int p, int m)
+        {
+            for (int i = p; i >= 0; i--)
+            {
+                bits[i] = i < m ? 1 : 0;
+            }
+        }
+
+        private static int[] GetSetBits(int[] bits, int k)
+        {
+            var setBits = new int[k];
+            var c = 0;
+            for (int i = 0; i < bits.Length; i++)
+            {
+                if (bits[i] == 1) setBits[c++] = i;
+                if (c == k) break;
+            }
+            return setBits;
+        }
+
+        private static void MoveAllBits(int k0, int k, int[] bits, int p, ref int c, long[] values, int[][] setBits)
+        {
+            while (p >= 0 && p + 1 < bits.Length && bits[p] == 1 && bits[p + 1] == 0)
+            {
+                MoveBit(bits, p);
+                ShiftBitsToRight(bits, p - 1, k - 1);
+                values[c] = BitValue(bits);
+                setBits[c] = GetSetBits(bits, k0);
+                c++;
+                MoveAllBits(k0, k - 1, bits, k - 2, ref c, values, setBits);
+                p++;
+            }
+        }
+
+        private static void SetsNk(int n, int k, out long[] values, out int[][] setBits)
+        {
+            var ncomb = k == n ? 1 : fact[n] / fact[n - k] / fact[k];
+            var bits = new int[n];
+            for (int i = 0; i < k; i++)
+            {
+                bits[i] = 1;
+            }
+            values = new long[ncomb];
+            setBits = new int[ncomb][];
+            values[0] = BitValue(bits);
+            setBits[0] = GetSetBits(bits, k);
+            if (ncomb == 1) return;
+            var c = 1;
+            var f0 = k - 1;
+            while (f0 < bits.Length - 1)
+            {
+                MoveBit(bits, f0);
+                ShiftBitsToRight(bits, f0 - 1, k - 1);
+                values[c] = BitValue(bits);
+                setBits[c] = GetSetBits(bits, k);
+                c++;
+                MoveAllBits(k, k - 1, bits, k - 2, ref c, values, setBits);
+                f0++;
+            }
         }
 
         private static string[] TSP(int n, int[,] distance)
         {
             var dp = new int[(int)Math.Pow(2, n)][];
-
-            foreach (var setInit in SetsNk(n, 1))
+            long f = 1;
+            pow2[0] = 1;
+            for (long i = 1; i < 20; i++)
             {
-                dp[setInit.Key] = new int[n + 1];
+                f *= i;
+                fact[i] = f;
+                pow2[i] = (long)Math.Pow(2, i);
+            }
+
+            long[] setValues;
+            int[][] setBits;
+
+            SetsNk(n, 1, out setValues, out setBits);
+            foreach (var val in setValues)
+            {
+                dp[val] = new int[n + 1];
             }
 
             for (int k = 2; k <= n; k++)
             {
-                foreach (var setCur in SetsNk(n, k))
+                SetsNk(n, k, out setValues, out setBits);
+                for (var s = 0; s < setValues.Length; s++)
                 {
-                    dp[setCur.Key] = new int[n];
-                    dp[setCur.Key][0] = int.MaxValue;
-                    for (int i = 0; i < setCur.Value.Length; i++)
+                    dp[setValues[s]] = new int[n];
+                    dp[setValues[s]][0] = int.MaxValue;
+                    for (int i = 0; i < setBits[s].Length; i++)
                     {
-                        if (setCur.Value[i] == 0) continue;
-                        dp[setCur.Key][setCur.Value[i]] = int.MaxValue;
-                        for (int j = 0; j < setCur.Value.Length; j++)
+                        if (setBits[s][i] == 0) continue;
+                        dp[setValues[s]][setBits[s][i]] = int.MaxValue;
+                        for (int j = 0; j < setBits[s].Length; j++)
                         {
-                            if (setCur.Value[i] != setCur.Value[j] && distance[setCur.Value[i] + 1, setCur.Value[j] + 1] > 0)
+                            if (setBits[s][i] != setBits[s][j] && distance[setBits[s][i] + 1, setBits[s][j] + 1] > 0)
                             {
-                                var prevValue = setCur.Key ^ (1 << setCur.Value[i]);
-                                var pathLen = dp[prevValue][setCur.Value[j]] + distance[setCur.Value[i] + 1, setCur.Value[j] + 1];
-                                if (pathLen > 0 && pathLen < dp[setCur.Key][setCur.Value[i]])
+                                var prevValue = setValues[s] ^ (1 << setBits[s][i]);
+                                var pathLen = dp[prevValue][setBits[s][j]] + distance[setBits[s][i] + 1, setBits[s][j] + 1];
+                                if (pathLen > 0 && pathLen < dp[setValues[s]][setBits[s][i]])
                                 {
-                                    dp[setCur.Key][setCur.Value[i]] = pathLen;
+                                    dp[setValues[s]][setBits[s][i]] = pathLen;
                                 }
                             }
                         }
@@ -88,35 +153,35 @@ namespace _3_school_bus
                 }
             }
 
-            // reconstruct path, going backwards from last dp element
-            var result = new int[n];
-            result[0] = 1;
-            var rIdx = n - 1;
-            var cIdx = dp.Length - 1;
-            var curIdx = 1;
-            var curValue = minPath;
-            while (rIdx > 0)
+            if (minPath > 0 && minPath < int.MaxValue)
             {
-                for (int i = 1; i < n; i++)
+                // reconstruct path, going backwards from last dp element
+                var result = new int[n];
+                result[0] = 1;
+                var rIdx = n - 1;
+                var cIdx = dp.Length - 1;
+                var curIdx = 1;
+                var curValue = minPath;
+                while (rIdx > 0)
                 {
-                    if (dp[cIdx][i] > 0 && dp[cIdx][i] < int.MaxValue && distance[i + 1, curIdx] + dp[cIdx][i] == curValue)
+                    for (int i = 1; i < n; i++)
                     {
-                        curValue = dp[cIdx][i];
-                        curIdx = i + 1;
-                        result[rIdx] = i + 1;
-                        cIdx ^= (1 << i);
-                        break;
+                        if (dp[cIdx][i] > 0 && dp[cIdx][i] < int.MaxValue && distance[i + 1, curIdx] + dp[cIdx][i] == curValue)
+                        {
+                            curValue = dp[cIdx][i];
+                            curIdx = i + 1;
+                            result[rIdx] = i + 1;
+                            cIdx ^= (1 << i);
+                            break;
+                        }
                     }
+                    rIdx--;
                 }
-                rIdx--;
-            }
 
-            if (result.Length > 2 && minPath > 0 && minPath < int.MaxValue)
-            {
                 return new string[] {
-                    minPath.ToString(),
-                    string.Join(" ", result)
-                };
+                                minPath.ToString(),
+                                string.Join(" ", result)
+                            };
             }
             else
             {
