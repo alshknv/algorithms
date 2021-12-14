@@ -97,10 +97,11 @@ namespace _1_phiX174_error_free
             var maxOver = 0;
             for (int i = 2; i < order.Length; i++)
             {
-                for (int j = i + 1; j < order.Length; j++)
+                for (int j = 2; j < order.Length; j++)
                 {
+                    if (i == j) continue;
                     var suffLen = len1 - order[i];
-                    if (order[i] < len1 && order[j] == len1 + 1 && Lcp(text, order[i], order[j]) == suffLen)
+                    if (suffLen > 0 && order[i] < len1 && order[j] == len1 + 1 && Lcp(text, order[i], order[j]) == suffLen)
                     {
                         if (suffLen > maxOver) maxOver = suffLen;
                     }
@@ -119,10 +120,14 @@ namespace _1_phiX174_error_free
     public class Vertex
     {
         public string Read;
+        public bool Visited;
+        public int Id;
         public LinkedList<Edge> Edges = new LinkedList<Edge>();
+        public LinkedListNode<Edge> CurrentEdge;
 
-        public Vertex(string read)
+        public Vertex(int id, string read)
         {
+            Id = id;
             Read = read;
         }
         public void AddEdge(int overlap, int destination)
@@ -153,19 +158,70 @@ namespace _1_phiX174_error_free
         public static string Assemble(string[] reads)
         {
             var overlapGraph = new Vertex[reads.Length];
+
+            // build overlap graph
             for (int i = 0; i < reads.Length; i++)
             {
                 for (int j = i + 1; j < reads.Length; j++)
                 {
                     var overlapIJ = Overlap.FindLongest(reads[i], reads[j]);
-                    if (overlapGraph[i] == null) overlapGraph[i] = new Vertex(reads[i]);
-                    overlapGraph[i].AddEdge(overlapIJ, j);
+                    if (overlapGraph[i] == null) overlapGraph[i] = new Vertex(i, reads[i]);
+                    if (overlapIJ > 0)
+                        overlapGraph[i].AddEdge(overlapIJ, j);
                     var overlapJI = Overlap.FindLongest(reads[j], reads[i]);
-                    if (overlapGraph[j] == null) overlapGraph[j] = new Vertex(reads[j]);
-                    overlapGraph[j].AddEdge(overlapJI, i);
+                    if (overlapGraph[j] == null) overlapGraph[j] = new Vertex(j, reads[j]);
+                    if (overlapJI > 0)
+                        overlapGraph[j].AddEdge(overlapJI, i);
                 }
             }
-            return "";
+
+            for (int i = 0; i < overlapGraph.Length; i++)
+            {
+                overlapGraph[i].CurrentEdge = overlapGraph[i].Edges.First;
+            }
+
+            // greedy hamiltonian path
+            var path = new List<Vertex>(overlapGraph.Length) { overlapGraph[0] };
+            var overlaps = new List<int>(overlapGraph.Length);
+            do
+            {
+                var vertex = path[path.Count - 1];
+                vertex.Visited = true;
+                while (vertex.CurrentEdge != null && overlapGraph[vertex.CurrentEdge.Value.Destination].Visited)
+                    vertex.CurrentEdge = vertex.CurrentEdge.Next;
+                if (vertex.CurrentEdge == null)
+                {
+                    overlapGraph[vertex.Id].Visited = false;
+                    path.RemoveAt(path.Count - 1);
+                    if (path.Count > 0)
+                    {
+                        path[path.Count - 1].CurrentEdge = path[path.Count - 1].CurrentEdge.Next;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    path.Add(overlapGraph[vertex.CurrentEdge.Value.Destination]);
+                    overlaps.Add(vertex.CurrentEdge.Value.Overlap);
+                    if (path.Count == overlapGraph.Length) break;
+                }
+            } while (true);
+
+            var genome = new string[overlapGraph.Length];
+            genome[0] = path[0].Read;
+            for (int i = 1; i < overlapGraph.Length; i++)
+            {
+                genome[i] = path[i].Read.Substring(overlaps[i - 1]);
+            }
+            var lastVertex = overlapGraph[path[path.Count - 1].Id];
+            while (lastVertex.CurrentEdge?.Value.Destination != 0) lastVertex.CurrentEdge = lastVertex.CurrentEdge.Next;
+            var cycleOverlap = lastVertex.CurrentEdge?.Value.Overlap ?? 0;
+            genome[genome.Length - 1] = genome[genome.Length - 1].Substring(0, cycleOverlap / 2);
+            genome[0] = genome[0].Substring(cycleOverlap - cycleOverlap / 2);
+            return string.Concat(genome);
         }
 
         static void Main(string[] args)
