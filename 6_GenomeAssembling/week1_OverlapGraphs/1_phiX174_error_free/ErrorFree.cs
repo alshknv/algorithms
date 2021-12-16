@@ -4,7 +4,121 @@ using System.Linq;
 
 namespace _1_phiX174_error_free
 {
-    public static class Overlap
+    public class StNode
+    {
+        public StNode Parent;
+        public SortedDictionary<char, StNode> Children = new SortedDictionary<char, StNode>();
+        public int Depth;
+        public int Start;
+        public int End;
+    }
+
+    public static class SuffixTree
+    {
+        private static StNode CreateNewLeaf(StNode node, string s, int suffix)
+        {
+            var leaf = new StNode()
+            {
+                Parent = node,
+                Depth = s.Length - suffix,
+                Start = suffix + node.Depth,
+                End = s.Length - 1
+            };
+            node.Children[s[leaf.Start]] = leaf;
+            return leaf;
+        }
+
+        private static StNode BreakEdge(StNode node, string s, int start, int offset)
+        {
+            var startCh = s[start];
+            var midCh = s[start + offset];
+            var midNode = new StNode()
+            {
+                Parent = node,
+                Depth = node.Depth + offset,
+                Start = start,
+                End = start + offset - 1
+            };
+            midNode.Children[midCh] = node.Children[startCh];
+            node.Children[startCh].Parent = midNode;
+            node.Children[startCh].Start += offset;
+            node.Children[startCh] = midNode;
+            return midNode;
+        }
+
+        private static int[] InvertSuffixArray(int[] order)
+        {
+            var pos = new int[order.Length];
+            for (int i = 0; i < pos.Length; i++)
+            {
+                pos[order[i]] = i;
+            }
+            return pos;
+        }
+
+        private static int Lcp(string s, int i, int j, int equal)
+        {
+            var lcp = Math.Max(0, equal);
+            while (i + lcp < s.Length && j + lcp < s.Length)
+            {
+                if (s[i + lcp] == s[j + lcp])
+                    lcp++;
+                else break;
+            }
+            return lcp;
+        }
+
+        private static int[] LcpArray(string s, int[] order)
+        {
+            var lcpArray = new int[s.Length - 1];
+            var lcp = 0;
+            var posInOrder = InvertSuffixArray(order);
+            var suffix = order[0];
+            for (int i = 0; i < s.Length; i++)
+            {
+                var orderIndex = posInOrder[suffix];
+                if (orderIndex == s.Length - 1)
+                {
+                    lcp = 0;
+                    suffix = (suffix + 1) % s.Length;
+                    continue;
+                }
+                var nextSuffix = order[orderIndex + 1];
+                lcp = Lcp(s, suffix, nextSuffix, lcp - 1);
+                lcpArray[orderIndex] = lcp;
+                suffix = (suffix + 1) % s.Length;
+            }
+            return lcpArray;
+        }
+
+        public static StNode FromArray(string s, int[] order)
+        {
+            var lcpArray = LcpArray(s, order);
+            var root = new StNode() { Start = -1, End = -1 };
+            var lcpPrev = 0;
+            var curNode = root;
+            for (int i = 0; i < s.Length; i++)
+            {
+                var suffix = order[i];
+                while (curNode.Depth > lcpPrev) curNode = curNode.Parent;
+                if (curNode.Depth == lcpPrev)
+                {
+                    curNode = CreateNewLeaf(curNode, s, suffix);
+                }
+                else
+                {
+                    var edgeStart = order[i - 1] + curNode.Depth;
+                    var offset = lcpPrev - curNode.Depth;
+                    var midNode = BreakEdge(curNode, s, edgeStart, offset);
+                    curNode = CreateNewLeaf(midNode, s, suffix);
+                }
+                if (i < s.Length - 1) lcpPrev = lcpArray[i];
+            }
+            return root;
+        }
+    }
+
+    public static class SuffixArray
     {
         private static int[] SortChars(string text)
         {
@@ -68,46 +182,18 @@ namespace _1_phiX174_error_free
             return newClass;
         }
 
-        private static int Lcp(string s, int i, int j)
+        public static int[] FromString(string s)
         {
-            var lcp = 0;
-            while (i + lcp < s.Length && j + lcp < s.Length)
-            {
-                if (s[i + lcp] == s[j + lcp])
-                    lcp++;
-                else break;
-            }
-            return lcp;
-        }
-
-        public static int FindLongest(string read1, string read2)
-        {
-            var text = read1 + "#" + read2 + "$";
-            var order = SortChars(text);
-            var classArr = ComputeClasses(text, order);
-            var textlen = text.Length;
+            var order = SortChars(s);
+            var classArr = ComputeClasses(s, order);
             var l = 1;
-            while (l < textlen)
+            while (l < s.Length)
             {
-                order = Sort2L(textlen, l, order, classArr);
+                order = Sort2L(s.Length, l, order, classArr);
                 classArr = UpdateClasses(order, classArr, l);
                 l = 2 * l;
             }
-            var len1 = (text.Length - 2) / 2;
-            var maxOver = 0;
-            for (int i = 2; i < order.Length; i++)
-            {
-                for (int j = 2; j < order.Length; j++)
-                {
-                    if (i == j) continue;
-                    var suffLen = len1 - order[i];
-                    if (suffLen > 0 && order[i] < len1 && order[j] == len1 + 1 && Lcp(text, order[i], order[j]) == suffLen)
-                    {
-                        if (suffLen > maxOver) maxOver = suffLen;
-                    }
-                }
-            }
-            return maxOver;
+            return order;
         }
     }
 
@@ -155,6 +241,42 @@ namespace _1_phiX174_error_free
 
     public static class ErrorFree
     {
+        private static int FindLongestOverlap(string read1, string read2)
+        {
+            var s = read1 + "#" + read2 + "$";
+            // build suffix array
+            var order = SuffixArray.FromString(s);
+            // build suffix tree
+            var tree = SuffixTree.FromArray(s, order);
+
+
+            // find max overlap
+
+            int maxOverlap = 0;
+            var stack = new Stack<StNode>();
+            stack.Push(tree);
+            while (stack.Count > 0)
+            {
+                var node = stack.Pop();
+                //check if it is overlap node
+                var hasSuffix = false;
+                var hasPrefix = false;
+                foreach (var child in node.Children)
+                {
+                    if (child.Value.Start == read1.Length)
+                        hasSuffix = true;
+                    else if (child.Value.Start > read2.Length && child.Value.Start - (read1.Length + 1) == node.Depth)
+                        hasPrefix = true;
+                    if (hasSuffix && hasPrefix)
+                    {
+                        // overlap found
+                        if (node.Depth > maxOverlap) maxOverlap = node.Depth;
+                    }
+                    stack.Push(child.Value);
+                }
+            }
+            return maxOverlap;
+        }
         public static string Assemble(string[] reads)
         {
             var overlapGraph = new Vertex[reads.Length];
@@ -164,11 +286,11 @@ namespace _1_phiX174_error_free
             {
                 for (int j = i + 1; j < reads.Length; j++)
                 {
-                    var overlapIJ = Overlap.FindLongest(reads[i], reads[j]);
+                    var overlapIJ = FindLongestOverlap(reads[i], reads[j]);
                     if (overlapGraph[i] == null) overlapGraph[i] = new Vertex(i, reads[i]);
                     if (overlapIJ > 0)
                         overlapGraph[i].AddEdge(overlapIJ, j);
-                    var overlapJI = Overlap.FindLongest(reads[j], reads[i]);
+                    var overlapJI = FindLongestOverlap(reads[j], reads[i]);
                     if (overlapGraph[j] == null) overlapGraph[j] = new Vertex(j, reads[j]);
                     if (overlapJI > 0)
                         overlapGraph[j].AddEdge(overlapJI, i);
