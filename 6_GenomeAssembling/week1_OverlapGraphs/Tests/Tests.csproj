@@ -13,4 +13,9 @@
     <PackageReference Include="coverlet.collector" Version="1.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\2_phiX174_error_prone\2_phiX174_error_prone.csproj" />
+    <ProjectReference Include="..\1_phiX174_error_free\1_phiX174_error_free.csproj" />
+  </ItemGroup>
+
 </Project>

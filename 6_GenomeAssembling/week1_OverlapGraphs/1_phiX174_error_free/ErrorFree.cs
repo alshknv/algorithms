@@ -277,6 +277,7 @@ namespace _1_phiX174_error_free
             }
             return maxOverlap;
         }
+
         public static string Assemble(string[] reads)
         {
             var overlapGraph = new Vertex[reads.Length];
@@ -339,17 +340,19 @@ namespace _1_phiX174_error_free
                 genome[i] = path[i].Read.Substring(overlaps[i - 1]);
             }
             var lastVertex = overlapGraph[path[path.Count - 1].Id];
-            while (lastVertex.CurrentEdge?.Value.Destination != 0) lastVertex.CurrentEdge = lastVertex.CurrentEdge.Next;
-            var cycleOverlap = lastVertex.CurrentEdge?.Value.Overlap ?? 0;
-            genome[genome.Length - 1] = genome[genome.Length - 1].Substring(0, cycleOverlap / 2);
-            genome[0] = genome[0].Substring(cycleOverlap - cycleOverlap / 2);
+            lastVertex.CurrentEdge = lastVertex.Edges.First;
+            while ((lastVertex.CurrentEdge?.Value?.Destination ?? 0) != 0) lastVertex.CurrentEdge = lastVertex.CurrentEdge.Next;
+            var cycleOverlap = lastVertex.CurrentEdge?.Value?.Overlap ?? 0;
+            if (cycleOverlap > 0)
+            {
+                genome[genome.Length - 1] = genome[genome.Length - 1].Substring(0, cycleOverlap / 2);
+                genome[0] = genome[0].Substring(cycleOverlap - cycleOverlap / 2);
+            }
             return string.Concat(genome);
         }
 
         static void Main(string[] args)
         {
-            var gg = Assemble(new string[] { "AAC", "ACG", "GAA", "GTT", "TCG" });
-            return;
             var reads = new string[1618];
             for (int i = 0; i < 1618; i++)
                 reads[i] = Console.ReadLine();
