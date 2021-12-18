@@ -48,35 +48,23 @@ namespace _2_phiX174_error_prone
 
     public static class ErrorProne
     {
-        private static int FindLongestOverlap(string s1, string s2, int error)
+        private static int FindLongestOverlap(string s1, string s2, int errors)
         {
-            var matrix = new int[s1.Length, s2.Length];
             for (int i = 0; i < s1.Length; i++)
             {
-                for (int j = 0; j < s2.Length; j++)
+                if (s1[i] == s2[0] || errors > 0)
                 {
-                    if (s1[i] == s2[j])
+                    var k = 1;
+                    var e = s1[i] == s2[0] ? 0 : 1;
+                    while (i + k < s1.Length && k < s2.Length && (s1[i + k] == s2[k] || e < errors))
                     {
-                        matrix[i, j] = 1;
+                        if (s1[i + k] != s2[k]) e++;
+                        k++;
                     }
+                    if (i + k == s1.Length) return k;
                 }
             }
-            var maxOverlap = 0;
-            for (int i = 0; i < s1.Length; i++)
-            {
-                if (matrix[i, 0] == 1 || error > 0)
-                {
-                    var b = 1;
-                    var e = matrix[i, 0] == 1 ? 0 : 1;
-                    while (i + b < s1.Length && b < s2.Length && (matrix[i + b, b] == 1 || e < error))
-                    {
-                        if (matrix[i + b, b] == 0) e++;
-                        b++;
-                    }
-                    if (i + b == s1.Length && b > maxOverlap) maxOverlap = b;
-                }
-            }
-            return maxOverlap;
+            return 0;
         }
 
         public static string Assemble(string[] reads)
@@ -88,11 +76,11 @@ namespace _2_phiX174_error_prone
             {
                 for (int j = i + 1; j < reads.Length; j++)
                 {
-                    var overlapIJ = FindLongestOverlap(reads[i], reads[j], 1);
+                    var overlapIJ = FindLongestOverlap(reads[i], reads[j], 2);
                     if (overlapGraph[i] == null) overlapGraph[i] = new Vertex(i, reads[i]);
                     if (overlapIJ > 0)
                         overlapGraph[i].AddEdge(overlapIJ, j);
-                    var overlapJI = FindLongestOverlap(reads[j], reads[i], 1);
+                    var overlapJI = FindLongestOverlap(reads[j], reads[i], 2);
                     if (overlapGraph[j] == null) overlapGraph[j] = new Vertex(j, reads[j]);
                     if (overlapJI > 0)
                         overlapGraph[j].AddEdge(overlapJI, i);
@@ -134,18 +122,18 @@ namespace _2_phiX174_error_prone
                 }
             } while (true);
 
-            var genome = new string[overlapGraph.Length];
-            genome[0] = path[0].Read;
+            var genomeArray = new string[overlapGraph.Length];
+            genomeArray[0] = path[0].Read;
             for (int i = 1; i < overlapGraph.Length; i++)
             {
-                genome[i] = path[i].Read.Substring(overlaps[i - 1]);
+                genomeArray[i - 1] = genomeArray[i - 1].Substring(0, genomeArray[i - 1].Length - overlaps[i - 1]);
+                genomeArray[i] = path[i].Read;
             }
-            var lastVertex = overlapGraph[path[path.Count - 1].Id];
-            while (lastVertex.CurrentEdge?.Value.Destination != 0) lastVertex.CurrentEdge = lastVertex.CurrentEdge.Next;
-            var cycleOverlap = lastVertex.CurrentEdge?.Value.Overlap ?? 0;
-            genome[genome.Length - 1] = genome[genome.Length - 1].Substring(0, cycleOverlap / 2);
-            genome[0] = genome[0].Substring(cycleOverlap - cycleOverlap / 2);
-            return string.Concat(genome);
+            var genome = string.Concat(genomeArray);
+            var cycleOverlap = FindLongestOverlap(genome, path[0].Read, 5);
+            if (cycleOverlap > 0)
+                genome = genome.Substring(0, genome.Length - cycleOverlap);
+            return genome;
         }
 
         static void Main(string[] args)

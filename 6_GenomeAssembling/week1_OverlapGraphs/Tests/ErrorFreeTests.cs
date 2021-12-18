@@ -19,17 +19,20 @@ namespace Tests
             var rnd = new Random();
             const int N = 1500;
             const int readLen = 100;
-            const int readShift = 20;
+            const int readShift = 5;
             var charArray = new char[N];
             for (int i = 0; i < N; i++)
             {
                 charArray[i] = chars[rnd.Next(1000) % 4];
             }
             var genome = new string(charArray);
-            var reads = new string[(genome.Length - (readLen - readShift)) / readShift];
+            var reads = new string[genome.Length / readShift];
             for (int i = 0; i < reads.Length; i++)
             {
-                reads[i] = genome.Substring(i * readShift, readLen);
+                var startIdx = i * readShift;
+                reads[i] = startIdx + readLen < genome.Length ?
+                    genome.Substring(startIdx, readLen) :
+                    genome[startIdx..] + genome[..(readLen - (genome.Length - startIdx))];
             }
             Assert.Equal(genome, ErrorFree.Assemble(reads));
         }
