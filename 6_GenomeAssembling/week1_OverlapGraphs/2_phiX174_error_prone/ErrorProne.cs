@@ -92,7 +92,7 @@ namespace _2_phiX174_error_prone
                 overlapGraph[i].CurrentEdge = overlapGraph[i].Edges.First;
             }
 
-            // greedy hamiltonian path
+            // find greedy hamiltonian path
             var path = new List<Vertex>(overlapGraph.Length) { overlapGraph[0] };
             var overlaps = new List<int>(overlapGraph.Length);
             do
@@ -122,18 +122,59 @@ namespace _2_phiX174_error_prone
                 }
             } while (true);
 
+            // calculate positions of reads
+            var readPositions = new int[overlaps.Count + 1];
+            readPositions[0] = 0;
+            for (int i = 1; i <= overlaps.Count; i++)
+            {
+                readPositions[i] += readPositions[i - 1] + (path[i].Read.Length - overlaps[i - 1]);
+            }
+
+            // find overlap between end and start and cut the genome string
             var genomeArray = new string[overlapGraph.Length];
-            genomeArray[0] = path[0].Read;
+            var pathReads = new string[overlapGraph.Length];
+            genomeArray[0] = pathReads[0] = path[0].Read;
             for (int i = 1; i < overlapGraph.Length; i++)
             {
                 genomeArray[i - 1] = genomeArray[i - 1].Substring(0, genomeArray[i - 1].Length - overlaps[i - 1]);
-                genomeArray[i] = path[i].Read;
+                pathReads[i] = genomeArray[i] = path[i].Read;
             }
-            var genome = string.Concat(genomeArray);
-            var cycleOverlap = FindLongestOverlap(genome, path[0].Read, 5);
+            var genomeString = string.Concat(genomeArray);
+            var cycleOverlap = FindLongestOverlap(genomeString, path[0].Read, 5);
             if (cycleOverlap > 0)
-                genome = genome.Substring(0, genome.Length - cycleOverlap);
-            return genome;
+                genomeString = genomeString.Substring(0, genomeString.Length - cycleOverlap);
+
+            // replace errors with most popular char at given position among all reads that contains it
+            var genome = genomeString.ToCharArray();
+            for (int i = 0; i < genome.Length; i++)
+            {
+                var charStat = new Dictionary<char, int>();
+                for (int j = 0; j < pathReads.Length; j++)
+                {
+                    var end = readPositions[j] + pathReads[j].Length;
+                    var start = end <= genome.Length || i >= readPositions[j] ? readPositions[j] : 0;
+                    var readShift = end > genome.Length && i < readPositions[j] ? genome.Length - readPositions[j] : 0;
+                    if (end > genome.Length && i < readPositions[j]) end -= genome.Length;
+                    if (i >= start && i < end)
+                    {
+                        var readChar = pathReads[j][readShift + (i - start)];
+                        if (!charStat.ContainsKey(readChar))
+                        {
+                            charStat.Add(readChar, 1);
+                        }
+                        else
+                        {
+                            charStat[readChar]++;
+                        }
+                    }
+                }
+                var correctChar = charStat.OrderByDescending(x => x.Value).First().Key;
+                if (genome[i] != correctChar)
+                {
+                    genome[i] = correctChar;
+                }
+            }
+            return new string(genome);
         }
 
         static void Main(string[] args)

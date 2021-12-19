@@ -9,7 +9,7 @@ namespace Tests
         [Fact]
         public void Simple()
         {
-            Assert.Equal("ACGTTCGA", ErrorFree.Assemble(new string[] { "AAC", "ACG", "GAA", "GTT", "TCG" }));
+            Assert.Equal("AACGTTCG", ErrorFree.Assemble(new string[] { "AAC", "ACG", "GAA", "GTT", "TCG" }));
         }
 
         [Fact]
@@ -19,7 +19,7 @@ namespace Tests
             var rnd = new Random();
             const int N = 1500;
             const int readLen = 100;
-            const int readShift = 5;
+            const int readShift = 1;
             var charArray = new char[N];
             for (int i = 0; i < N; i++)
             {
