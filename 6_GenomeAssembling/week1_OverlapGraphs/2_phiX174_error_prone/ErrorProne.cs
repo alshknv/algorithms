@@ -33,12 +33,14 @@ namespace _2_phiX174_error_prone
             }
             else
             {
-                while (edge != null && edge.Value.Overlap > overlap) edge = edge.Next;
+                var count = 0;
+                while (edge != null && count++ < 5 && edge.Value.Overlap >= overlap)
+                    edge = edge.Next;
                 if (edge == null)
                 {
                     Edges.AddLast(newEdge);
                 }
-                else
+                else if (count < 5)
                 {
                     Edges.AddBefore(edge, newEdge);
                 }
@@ -50,7 +52,7 @@ namespace _2_phiX174_error_prone
     {
         private static int FindLongestOverlap(string s1, string s2, int errors)
         {
-            for (int i = 0; i < s1.Length; i++)
+            for (int i = 0; i < s1.Length - 12; i++)
             {
                 if (s1[i] == s2[0] || errors > 0)
                 {
