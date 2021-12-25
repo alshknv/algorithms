@@ -6,12 +6,7 @@ namespace _2_eulerian_cycle
 {
     public class Vertex
     {
-        public int Id;
         public List<Edge> Edges = new List<Edge>();
-        public Vertex(int id)
-        {
-            Id = id;
-        }
     }
 
     public class Edge
@@ -31,7 +26,7 @@ namespace _2_eulerian_cycle
         private static List<int> FindCycle(int start)
         {
             var v = start;
-            var cycle = new List<int>() { graph[start].Id };
+            var cycle = new List<int>() { start };
             do
             {
                 var edgeFound = false;
@@ -42,7 +37,7 @@ namespace _2_eulerian_cycle
                         graph[v].Edges[e].Visited = true;
                         v = graph[v].Edges[e].Destination;
                         if (v != start)
-                            cycle.Add(graph[v].Id);
+                            cycle.Add(v);
                         edgeFound = true;
                         break;
                     }
@@ -56,54 +51,52 @@ namespace _2_eulerian_cycle
         {
             // construct graph
             var nm = input[0].Split(' ').Select(x => int.Parse(x)).ToArray();
-            graph = new Vertex[nm[0]];
-            for (int i = 0; i < nm[0]; i++) graph[i] = new Vertex(i + 1);
+            graph = new Vertex[nm[0] + 1];
+            for (int i = 1; i <= nm[0]; i++) graph[i] = new Vertex();
             for (int j = 1; j <= nm[1]; j++)
             {
                 var edge = input[j].Split(' ').Select(x => int.Parse(x)).ToArray();
-                graph[edge[0] - 1].Edges.Add(new Edge(edge[1] - 1));
+                graph[edge[0]].Edges.Add(new Edge(edge[1]));
             }
 
-            // find cycle
-            int v;
-            int e;
-            var cycles = new List<Tuple<int, List<int>>>();
-            for (v = 0; v < graph.Length; v++)
+            // find first cycle
+            var cycle = FindCycle(1);
+            if (cycle == null) return new string[] { "0" };
+
+            // continue while cycle length is less than total number of edges
+            while (cycle.Count < nm[1])
             {
-                for (e = 0; e < graph[v].Edges.Count; e++)
+                for (int i = 0; i < cycle.Count; i++)
                 {
-                    if (!graph[v].Edges[e].Visited)
+                    for (int j = 0; j < graph[cycle[i]].Edges.Count; j++)
                     {
-                        // unvisited vertex found
-                        var cycle = new Tuple<int, List<int>>(graph[v].Id, FindCycle(v));
-                        if (cycle == null)
+                        if (!graph[cycle[i]].Edges[j].Visited)
                         {
-                            return new string[] { "0" };
+                            // unvisited edge found
+                            var newCycle = cycle.Take(i).ToList();
+                            if (newCycle == null)
+                            {
+                                // no eulerian cycle 
+                                return new string[] { "0" };
+                            }
+                            // insert new cycle in the middle of the old one and check for unvisited edges again
+                            var nextCycle = FindCycle(cycle[i]);
+                            if (nextCycle == null) return new string[] { "0" };
+                            newCycle.AddRange(nextCycle);
+                            newCycle.AddRange(cycle.Skip(i).Take(cycle.Count - i));
+                            cycle = newCycle;
+                            break;
                         }
-                        cycles.Add(cycle);
                     }
                 }
             }
-            var nextCycle = 1;
-            var fullCycle = new List<int>();
-            for (var c = 0; c < cycles[0].Item2.Count; c++)
-            {
-                if (nextCycle < cycles.Count && cycles[0].Item2[c] == cycles[nextCycle].Item1)
-                {
-                    // insert cycle
-                    for (var inc = 0; inc < cycles[nextCycle].Item2.Count; inc++)
-                    {
-                        fullCycle.Add(cycles[nextCycle].Item2[inc]);
-                    }
-                    nextCycle++;
-                }
-                fullCycle.Add(cycles[0].Item2[c]);
-            }
-            return new string[] { "1", string.Join(" ", fullCycle) };
+            return new string[] { "1", string.Join(" ", cycle) };
         }
 
         static void Main(string[] args)
         {
+            var gg = Solve(new string[] { "3 4", "2 3", "2 2", "1 2", "3 1" });
+            return;
             var nmline = Console.ReadLine();
             var m = int.Parse(nmline.Split(' ')[1]);
             var input = new string[m + 1];
