@@ -95,8 +95,6 @@ namespace _2_eulerian_cycle
 
         static void Main(string[] args)
         {
-            var gg = Solve(new string[] { "3 4", "2 3", "2 2", "1 2", "3 1" });
-            return;
             var nmline = Console.ReadLine();
             var m = int.Parse(nmline.Split(' ')[1]);
             var input = new string[m + 1];
