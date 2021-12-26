@@ -7,6 +7,14 @@ namespace _2_eulerian_cycle
     public class Vertex
     {
         public List<Edge> Edges = new List<Edge>();
+        public int VisitedCount;
+        public bool AllVisited
+        {
+            get
+            {
+                return VisitedCount == Edges.Count;
+            }
+        }
     }
 
     public class Edge
@@ -35,6 +43,7 @@ namespace _2_eulerian_cycle
                     if (!graph[v].Edges[e].Visited)
                     {
                         graph[v].Edges[e].Visited = true;
+                        graph[v].VisitedCount++;
                         v = graph[v].Edges[e].Destination;
                         if (v != start)
                             cycle.Add(v);
@@ -68,17 +77,13 @@ namespace _2_eulerian_cycle
             {
                 for (int i = 0; i < cycle.Count; i++)
                 {
+                    if (graph[cycle[i]].AllVisited) continue;
                     for (int j = 0; j < graph[cycle[i]].Edges.Count; j++)
                     {
                         if (!graph[cycle[i]].Edges[j].Visited)
                         {
                             // unvisited edge found
                             var newCycle = cycle.Take(i).ToList();
-                            if (newCycle == null)
-                            {
-                                // no eulerian cycle 
-                                return new string[] { "0" };
-                            }
                             // insert new cycle in the middle of the old one and check for unvisited edges again
                             var nextCycle = FindCycle(cycle[i]);
                             if (nextCycle == null) return new string[] { "0" };
