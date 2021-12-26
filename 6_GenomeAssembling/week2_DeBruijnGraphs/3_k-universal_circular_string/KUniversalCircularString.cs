@@ -41,6 +41,7 @@ namespace _3_k_universal_circular_string
             var cycle = new List<int>() { start };
             do
             {
+                // continue to go through unvisited edges until we come back to start
                 var edgeFound = false;
                 for (int e = 0; e < graph[v].Edges.Count; e++)
                 {
@@ -77,10 +78,11 @@ namespace _3_k_universal_circular_string
                         {
                             // unvisited edge found
                             var newCycle = cycle.Take(i).ToList();
-                            // insert new cycle in the middle of the old one and check for unvisited edges again
+                            // insert new cycle in the middle of the old one
                             var nextCycle = FindCycle(cycle[i]);
                             newCycle.AddRange(nextCycle);
                             newCycle.AddRange(cycle.Skip(i).Take(cycle.Count - i));
+                            // continue with larger cycle
                             cycle = newCycle;
                             break;
                         }

@@ -38,6 +38,7 @@ namespace _2_eulerian_cycle
             do
             {
                 var edgeFound = false;
+                // continue to go through unvisited edges until we come back to start
                 for (int e = 0; e < graph[v].Edges.Count; e++)
                 {
                     if (!graph[v].Edges[e].Visited)
@@ -70,7 +71,7 @@ namespace _2_eulerian_cycle
 
             // find first cycle
             var cycle = FindCycle(1);
-            if (cycle == null) return new string[] { "0" };
+            if (cycle == null) return new string[] { "0" }; // if there's no possible cycle, return
 
             // continue while cycle length is less than total number of edges
             while (cycle.Count < nm[1])
@@ -86,9 +87,10 @@ namespace _2_eulerian_cycle
                             var newCycle = cycle.Take(i).ToList();
                             // insert new cycle in the middle of the old one and check for unvisited edges again
                             var nextCycle = FindCycle(cycle[i]);
-                            if (nextCycle == null) return new string[] { "0" };
+                            if (nextCycle == null) return new string[] { "0" };  // if there's no possible cycle, return
                             newCycle.AddRange(nextCycle);
                             newCycle.AddRange(cycle.Skip(i).Take(cycle.Count - i));
+                            // continue with larger cycle
                             cycle = newCycle;
                             break;
                         }

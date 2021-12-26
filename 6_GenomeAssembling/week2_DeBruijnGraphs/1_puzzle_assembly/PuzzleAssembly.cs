@@ -20,7 +20,7 @@ namespace _1_puzzle_assembly
         private static bool CanBePlaced(string[] piece, int cell)
         {
             var neighbors = GetNeighbors(cell);
-            var neighborEdges = 2;
+            var neighborEdges = 2; // compare up side of the piece with neighbor's down side, right with left, and vice versa
             for (int e = 0; e < 4; e++)
             {
                 //if it is border - black color, if empty cell - any color is allowed, otherwise colors should match
@@ -38,13 +38,14 @@ namespace _1_puzzle_assembly
             {
                 if (CanBePlaced(pieces[p], cell))
                 {
+                    // if piece can be placed
                     grid[cell] = pieces[p];
                     if (cell == grid.Length - 1)
-                        return true;
+                        return true; // if it was last piece
                     var nextPieces = new List<string[]>(pieces);
-                    nextPieces.RemoveAt(p);
-                    if (!FillGrid(nextPieces, cell + 1))
-                        grid[cell] = null;
+                    nextPieces.RemoveAt(p); // for next iteration take all available pieces but the one we have placed
+                    if (!FillGrid(nextPieces, cell + 1)) // recursively fill puzzle starting from next cell
+                        grid[cell] = null; // if it can not be filled, backtrack to try another piece
                     else return true;
                 }
             }
