@@ -22,6 +22,7 @@ namespace _1_circulation
     public class Node
     {
         public bool Visited;
+        public int Balance;
         public TwoWayEdge PathBack;
         public List<TwoWayEdge> Edges = new List<TwoWayEdge>();
     }
@@ -99,7 +100,7 @@ namespace _1_circulation
             {
                 var edge = input[j].Split(' ').Select(x => int.Parse(x)).ToArray();
                 if (edge[1] == 1) edge[1] = n + 1; // if edge is going to s, redirect it to t
-                var edgeF = new Edge() { Destination = edge[1], Source = edge[0], Flow = edge[3] };
+                var edgeF = new Edge() { Destination = edge[1], Source = edge[0], Flow = edge[3], Lowerbound = edge[2], Index = j };
                 var edgeR = new Edge() { Destination = edge[0], Source = edge[1], Flow = 0, Lowerbound = edge[2], Index = j };
                 network[edge[0]].Edges.Add(new TwoWayEdge() { EdgeF = edgeF, EdgeR = edgeR });
             }
@@ -113,22 +114,27 @@ namespace _1_circulation
                 for (int i = 0; i < path.Edges.Length; i++)
                 {
                     path.Edges[i].EdgeF.Flow -= path.MinCapacity;
+                    network[path.Edges[i].EdgeF.Source].Balance -= path.MinCapacity;
                     path.Edges[i].EdgeR.Flow += path.MinCapacity;
+                    network[path.Edges[i].EdgeF.Destination].Balance += path.MinCapacity;
                 }
                 flow += path.MinCapacity;
             }
 
-            // check if resulting flow is valid for given lowerbounds
+            // check if incoming flow equals outgoing flow for splitted first node
+            if (network[1].Balance + network[network.Length - 1].Balance != 0)
+                return new string[] { "NO" };
+
+            // check that resulting flow satisfies given lowerbounds and every node conserves flow
             var result = new string[input.Length];
             result[0] = "YES";
             for (int i = 1; i < network.Length - 1; i++)
             {
+                if (i > 1 && network[i].Balance != 0) return new string[] { "NO" };
                 for (int j = 0; j < network[i].Edges.Count; j++)
                 {
                     if (network[i].Edges[j].EdgeR.Flow < network[i].Edges[j].EdgeR.Lowerbound)
-                    {
                         return new string[] { "NO" };
-                    }
                     result[network[i].Edges[j].EdgeR.Index] = network[i].Edges[j].EdgeR.Flow.ToString();
                 }
             }
