@@ -108,20 +108,24 @@ namespace _3_bubble_detection
             while (queue.Count > 0)
             {
                 var v = queue.Dequeue();
-                var splits = v.Splits;
                 if (graph[v.Index].Visited)
                 {
-                    var intersect = splits.Intersect(graph[v.Index].Splits).ToArray();
-                    var union = splits.Union(graph[v.Index].Splits).ToArray();
-                    bubbleCount += intersect.Length;
-                    splits = union.Except(intersect).ToList();
+                    var intersect = v.Splits.Intersect(graph[v.Index].Splits).ToArray();
+                    for (int i = 0; i < intersect.Length; i++)
+                    {
+                        if (v.Depth - intersect[i] <= kt[1]) bubbleCount++;
+                    }
                 }
-                graph[v.Index].Visited = true;
-                graph[v.Index].Splits = splits;
-                if (graph[v.Index].Edges.Count > 1) v.Splits.Add(v.Depth);
-                for (int i = 0; i < graph[v.Index].Edges.Count; i++)
+                else
                 {
-                    queue.Enqueue(new QueueItem() { Index = graph[v.Index].Edges[i].Destination, Depth = v.Depth + 1, Splits = graph[v.Index].Splits });
+                    graph[v.Index].Visited = true;
+                    graph[v.Index].Splits = v.Splits;
+                    if (graph[v.Index].Edges.Count > 1) v.Splits.Add(v.Depth);
+                    for (int i = 0; i < graph[v.Index].Edges.Count; i++)
+                    {
+                        if (graph[v.Index].Edges[i].Destination > 0)
+                            queue.Enqueue(new QueueItem() { Index = graph[v.Index].Edges[i].Destination, Depth = v.Depth + 1, Splits = graph[v.Index].Splits });
+                    }
                 }
             }
             return bubbleCount.ToString();
