@@ -7,10 +7,15 @@ namespace _3_bubble_detection
     public class Vertex
     {
         public int Index;
-        public bool Visited;
-        public int Depth;
-        public List<int> Splits;
         public List<Edge> Edges = new List<Edge>();
+        public int VisitedCount;
+        public bool AllVisited
+        {
+            get
+            {
+                return VisitedCount == Edges.Count;
+            }
+        }
         public Vertex(int index)
         {
             Index = index;
@@ -24,6 +29,7 @@ namespace _3_bubble_detection
     public class Edge
     {
         public int Destination;
+        public bool Visited;
         public Edge(int destination)
         {
             Destination = destination;
@@ -63,15 +69,9 @@ namespace _3_bubble_detection
         }
     }
 
-    public class QueueItem
-    {
-        public int Index;
-        public int Depth;
-        public List<int> Splits = new List<int>();
-    }
-
     public static class BubbleDetection
     {
+        private static Graph graph;
         private static HashSet<string> GetKMers(string[] reads, int k)
         {
             var kmers = new HashSet<string>();
@@ -85,13 +85,37 @@ namespace _3_bubble_detection
             return kmers;
         }
 
-        public static string Solve(string[] input)
+        private static bool FindCycle(int start, out List<int> cycle)
         {
-            var kt = input[0].Split(' ').Select(x => int.Parse(x)).ToArray();
-            var kmers = GetKMers(input.Skip(1).ToArray(), kt[0]).ToArray();
+            var v = start;
+            cycle = new List<int>() { start };
+            do
+            {
+                // continue to go through unvisited edges until we come back to start
+                var edgeFound = false;
+                for (int e = 0; e < graph[v].Edges.Count; e++)
+                {
+                    if (!graph[v].Edges[e].Visited)
+                    {
+                        graph[v].Edges[e].Visited = true;
+                        graph[v].VisitedCount++;
+                        v = graph[v].Edges[e].Destination;
+                        if (v != start)
+                            cycle.Add(v);
+                        edgeFound = true;
+                        break;
+                    }
+                }
+                if (!edgeFound) return false;
+            } while (v != start);
+            return true;
+        }
+
+        public static int CountBubbles(string[] kmers, int t)
+        {
+            graph = new Graph();
 
             // construct De Bruijn graph
-            var graph = new Graph();
             var edgeCount = 0;
             for (int i = 0; i < kmers.Length; i++)
             {
@@ -101,40 +125,57 @@ namespace _3_bubble_detection
                 edgeCount++;
             }
 
-            //breadth-first bubble BubbleDetection
-            var queue = new Queue<QueueItem>();
             var bubbleCount = 0;
-            queue.Enqueue(new QueueItem());
-            while (queue.Count > 0)
+            // find first cycle
+            List<int> cycle;
+            if (!FindCycle(0, out cycle)) return bubbleCount;
+
+            // continue while cycle length is less than total number of edges
+
+            while (cycle.Count < edgeCount)
             {
-                var v = queue.Dequeue();
-                if (graph[v.Index].Visited)
+                var hasUnexplored = false;
+                for (int i = 0; i < cycle.Count; i++)
                 {
-                    var intersect = v.Splits.Intersect(graph[v.Index].Splits).ToArray();
-                    for (int i = 0; i < intersect.Length; i++)
+                    if (graph[cycle[i]].AllVisited) continue;
+                    for (int j = 0; j < graph[cycle[i]].Edges.Count; j++)
                     {
-                        if (v.Depth - intersect[i] <= kt[1]) bubbleCount++;
+                        if (!graph[cycle[i]].Edges[j].Visited)
+                        {
+                            // unvisited edge found
+                            hasUnexplored = true;
+                            List<int> nextCycle;
+                            if (FindCycle(cycle[i], out nextCycle))
+                            {
+                                // insert new cycle in the middle of the old one and check for unvisited edges again
+                                var newCycle = cycle.Take(i).ToList();
+                                newCycle.AddRange(nextCycle);
+                                newCycle.AddRange(cycle.Skip(i).Take(cycle.Count - i));
+                                cycle = newCycle;
+                            }
+                            else if (nextCycle.Count - 1 <= t)
+                            {
+                                bubbleCount++;
+                            }
+                            break;
+                        }
                     }
                 }
-                else
-                {
-                    graph[v.Index].Visited = true;
-                    graph[v.Index].Splits = v.Splits;
-                    if (graph[v.Index].Edges.Count > 1) v.Splits.Add(v.Depth);
-                    for (int i = 0; i < graph[v.Index].Edges.Count; i++)
-                    {
-                        if (graph[v.Index].Edges[i].Destination > 0)
-                            queue.Enqueue(new QueueItem() { Index = graph[v.Index].Edges[i].Destination, Depth = v.Depth + 1, Splits = graph[v.Index].Splits });
-                    }
-                }
+                if (!hasUnexplored) break;
             }
-            return bubbleCount.ToString();
+            return bubbleCount;
+        }
+
+        public static string Solve(string[] input)
+        {
+            var kt = input[0].Split(' ').Select(x => int.Parse(x)).ToArray();
+            var kmers = GetKMers(input.Skip(1).ToArray(), kt[0]).ToArray();
+            var bubbles = CountBubbles(kmers, kt[1]);
+            return bubbles.ToString();
         }
 
         static void Main(string[] args)
         {
-            var gg = Solve(new string[] { "3 3", "AACG", "AAGG", "ACGT", "AGGT", "CGTT", "GCAA", "GGTT", "GTTG", "TGCA", "TTGC" });
-            return;
             var input = new List<string>();
             string inLine;
             while ((inLine = Console.ReadLine()) != null)

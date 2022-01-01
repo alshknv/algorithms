@@ -6,7 +6,6 @@ namespace _2_optimal_kmer_size
 {
     public class Vertex
     {
-        public string Mer;
         public int Index;
         public List<Edge> Edges = new List<Edge>();
         public int VisitedCount;
@@ -17,9 +16,8 @@ namespace _2_optimal_kmer_size
                 return VisitedCount == Edges.Count;
             }
         }
-        public Vertex(string mer, int index)
+        public Vertex(int index)
         {
-            Mer = mer;
             Index = index;
         }
 
@@ -60,7 +58,7 @@ namespace _2_optimal_kmer_size
             Vertex vertex;
             if (!mers.Contains(mer))
             {
-                vertex = new Vertex(mer, mers.Count);
+                vertex = new Vertex(mers.Count);
                 mers.Add(mer);
                 vertices.Add(mer, vertex);
             }
