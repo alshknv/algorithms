@@ -240,7 +240,7 @@ namespace _4_tip_removal
                 var kmers = GetKMers(input.Skip(1).ToArray(), k).ToArray();
                 var edges = ConstructGraph(kmers);
                 var tips = RemoveTips();
-                // check if eulerial graph exists
+                // check if eulerian graph exists
                 if (Exists(edges - tips))
                     return tips.ToString();
             }
