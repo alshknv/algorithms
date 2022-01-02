@@ -119,8 +119,9 @@ namespace _2_optimal_kmer_size
             if (cycle == null) return false;
 
             // continue while cycle length is less than total number of edges
-            while (cycle.Count < edgeCount)
+            while (true)
             {
+                var cycleExtended = false;
                 for (int i = 0; i < cycle.Count; i++)
                 {
                     if (graph[cycle[i]].AllVisited) continue;
@@ -128,6 +129,7 @@ namespace _2_optimal_kmer_size
                     {
                         if (!graph[cycle[i]].Edges[j].Visited)
                         {
+                            cycleExtended = true;
                             // unvisited edge found
                             var newCycle = cycle.Take(i).ToList();
                             // insert new cycle in the middle of the old one and check for unvisited edges again
@@ -140,8 +142,8 @@ namespace _2_optimal_kmer_size
                         }
                     }
                 }
+                if (!cycleExtended) return cycle.Count == edgeCount;
             }
-            return true;
         }
     }
 
