@@ -7,33 +7,29 @@ namespace _2_optimal_kmer_size
     public class Vertex
     {
         public int Index;
-        public List<Edge> Edges = new List<Edge>();
-        public int VisitedCount;
-        public bool AllVisited
-        {
-            get
-            {
-                return VisitedCount == Edges.Count;
-            }
-        }
+        public List<Edge> IncomingEdges = new List<Edge>();
+        public List<Edge> OutgoingEdges = new List<Edge>();
         public Vertex(int index)
         {
             Index = index;
         }
 
-        public void AddEdge(int destination)
+        public void AddIncomingEdge(int destination)
         {
-            Edges.Add(new Edge(destination));
+            IncomingEdges.Add(new Edge(destination));
+        }
+        public void AddOutgoingEdge(int destination)
+        {
+            OutgoingEdges.Add(new Edge(destination));
         }
     }
 
     public class Edge
     {
-        public int Destination;
-        public bool Visited;
-        public Edge(int destination)
+        public int Connection;
+        public Edge(int connection)
         {
-            Destination = destination;
+            Connection = connection;
         }
     }
 
@@ -53,6 +49,11 @@ namespace _2_optimal_kmer_size
             }
         }
 
+        public int VertexCount
+        {
+            get { return vertices.Count; }
+        }
+
         public int Vertex(string mer)
         {
             Vertex vertex;
@@ -67,83 +68,6 @@ namespace _2_optimal_kmer_size
                 vertex = vertices[mer];
             }
             return vertex.Index;
-        }
-    }
-
-    public static class EulerianCycle
-    {
-        private static Graph graph;
-
-        private static List<int> FindCycle(int start)
-        {
-            var v = start;
-            var cycle = new List<int>() { start };
-            do
-            {
-                // continue to go through unvisited edges until we come back to start
-                var edgeFound = false;
-                for (int e = 0; e < graph[v].Edges.Count; e++)
-                {
-                    if (!graph[v].Edges[e].Visited)
-                    {
-                        graph[v].Edges[e].Visited = true;
-                        graph[v].VisitedCount++;
-                        v = graph[v].Edges[e].Destination;
-                        if (v != start)
-                            cycle.Add(v);
-                        edgeFound = true;
-                        break;
-                    }
-                }
-                if (!edgeFound) return null;
-            } while (v != start);
-            return cycle;
-        }
-
-        public static bool Exists(string[] kmers)
-        {
-            graph = new Graph();
-
-            // construct De Bruijn graph
-            var edgeCount = 0;
-            for (int i = 0; i < kmers.Length; i++)
-            {
-                var from = graph.Vertex(kmers[i].Substring(0, kmers[i].Length - 1));
-                var to = graph.Vertex(kmers[i].Substring(1, kmers[i].Length - 1));
-                graph[from].AddEdge(to);
-                edgeCount++;
-            }
-
-            // find first cycle
-            var cycle = FindCycle(0);
-            if (cycle == null) return false;
-
-            // continue while cycle length is less than total number of edges
-            while (true)
-            {
-                var cycleExtended = false;
-                for (int i = 0; i < cycle.Count; i++)
-                {
-                    if (graph[cycle[i]].AllVisited) continue;
-                    for (int j = 0; j < graph[cycle[i]].Edges.Count; j++)
-                    {
-                        if (!graph[cycle[i]].Edges[j].Visited)
-                        {
-                            cycleExtended = true;
-                            // unvisited edge found
-                            var newCycle = cycle.Take(i).ToList();
-                            // insert new cycle in the middle of the old one and check for unvisited edges again
-                            var nextCycle = FindCycle(cycle[i]);
-                            if (nextCycle == null) return false;
-                            newCycle.AddRange(nextCycle);
-                            newCycle.AddRange(cycle.Skip(i).Take(cycle.Count - i));
-                            cycle = newCycle;
-                            break;
-                        }
-                    }
-                }
-                if (!cycleExtended) return cycle.Count == edgeCount;
-            }
         }
     }
 
@@ -164,13 +88,48 @@ namespace _2_optimal_kmer_size
 
         public static string Solve(string[] reads)
         {
-            for (int k = reads[0].Length; k >= 1; k--)
+            var min = 1;
+            var max = reads[0].Length;
+            var k = 0;
+            while (max > min)
             {
-                var kmers = GetKMers(reads, k).ToArray();
-                if (EulerianCycle.Exists(kmers))
-                    return k.ToString();
+                var mid = (int)Math.Floor(((double)max + min) / 2);
+                var kmers = GetKMers(reads, mid).ToArray();
+                var graph = new Graph();
+
+                // construct De Bruijn graph
+                var edgeCount = 0;
+                for (int i = 0; i < kmers.Length; i++)
+                {
+                    var from = graph.Vertex(kmers[i].Substring(0, kmers[i].Length - 1));
+                    var to = graph.Vertex(kmers[i].Substring(1, kmers[i].Length - 1));
+                    graph[from].AddOutgoingEdge(to);
+                    graph[to].AddIncomingEdge(from);
+                    edgeCount++;
+                }
+
+                // check if graph is eulerian, i.e. number of incoming edges is equal to number of outgoing edges at every vertex
+                var eulerian = true;
+                for (int i = 0; i < graph.VertexCount; i++)
+                {
+                    if (graph[i].IncomingEdges.Count != graph[i].OutgoingEdges.Count)
+                    {
+                        eulerian = false;
+                        break;
+                    }
+                }
+
+                if (eulerian)
+                {
+                    k = mid;
+                    min = mid + 1;
+                }
+                else
+                {
+                    max = mid - 1;
+                }
             }
-            return "0";
+            return k.ToString();
         }
 
         static void Main(string[] args)

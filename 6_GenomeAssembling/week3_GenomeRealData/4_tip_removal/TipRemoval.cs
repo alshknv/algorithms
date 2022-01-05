@@ -8,24 +8,20 @@ namespace _4_tip_removal
     public class Vertex
     {
         public int Index;
+        public bool Deleted;
         public List<Edge> OutgoingEdges = new List<Edge>();
         public List<Edge> IncomingEdges = new List<Edge>();
-        public int VisitedCount;
-        public bool AllOutgoingVisited
-        {
-            get
-            {
-                return VisitedCount == OutgoingEdges.Count;
-            }
-        }
+
         public Vertex(int index)
         {
             Index = index;
         }
+
         public void AddOutgoingEdge(int destination)
         {
             OutgoingEdges.Add(new Edge(destination));
         }
+
         public void AddIncomingEdge(int destination)
         {
             IncomingEdges.Add(new Edge(destination));
@@ -101,6 +97,7 @@ namespace _4_tip_removal
             var tipNum = 0;
             if (graph[v].IncomingEdges.Count < 2)
             {
+                graph[v].Deleted = true;
                 for (int j = 0; j < graph[v].OutgoingEdges.Count; j++)
                 {
                     if (graph[v].OutgoingEdges[j].Visited) continue;
@@ -121,12 +118,13 @@ namespace _4_tip_removal
             var tipNum = 0;
             if (graph[v].OutgoingEdges.Count < 2)
             {
+                graph[v].Deleted = true;
                 for (int j = 0; j < graph[v].IncomingEdges.Count; j++)
                 {
                     if (graph[v].IncomingEdges[j].Visited) continue;
                     tipNum += RemoveTargetTip(graph[v].IncomingEdges[j].Connection) + 1;
                     graph[v].IncomingEdges[j].Visited = true;
-                    for (int k = 0; k < graph[graph[v].IncomingEdges[j].Connection].IncomingEdges.Count; k++)
+                    for (int k = 0; k < graph[graph[v].IncomingEdges[j].Connection].OutgoingEdges.Count; k++)
                     {
                         if (graph[graph[v].IncomingEdges[j].Connection].OutgoingEdges[k].Connection == v)
                             graph[graph[v].IncomingEdges[j].Connection].OutgoingEdges[k].Visited = true;
@@ -136,21 +134,18 @@ namespace _4_tip_removal
             return tipNum;
         }
 
-        private static int ConstructGraph(string[] kmers)
+        private static void ConstructGraph(string[] kmers)
         {
             graph = new Graph();
 
             // construct De Bruijn graph
-            var edgeCount = 0;
             for (int i = 0; i < kmers.Length; i++)
             {
                 var from = graph.Vertex(kmers[i].Substring(0, kmers[i].Length - 1));
                 var to = graph.Vertex(kmers[i].Substring(1, kmers[i].Length - 1));
                 graph[from].AddOutgoingEdge(to);
                 graph[to].AddIncomingEdge(from);
-                edgeCount++;
             }
-            return edgeCount;
         }
 
         private static int RemoveTips()
@@ -173,77 +168,29 @@ namespace _4_tip_removal
             return tipCount;
         }
 
-        private static List<int> FindCycle(int start)
+        private static bool EulerianGraphExists()
         {
-            var v = start;
-            var cycle = new List<int>() { start };
-            do
+            var vertexCount = 0;
+            for (int i = 0; i < graph.VertexCount; i++)
             {
-                // continue to go through unvisited edges until we come back to start
-                var edgeFound = false;
-                for (int e = 0; e < graph[v].OutgoingEdges.Count; e++)
-                {
-                    if (!graph[v].OutgoingEdges[e].Visited)
-                    {
-                        graph[v].OutgoingEdges[e].Visited = true;
-                        graph[v].VisitedCount++;
-                        v = graph[v].OutgoingEdges[e].Connection;
-                        if (v != start)
-                            cycle.Add(v);
-                        edgeFound = true;
-                        break;
-                    }
-                }
-                if (!edgeFound) return null;
-            } while (v != start);
-            return cycle;
-        }
-
-        private static bool Exists(int edgeCount)
-        {
-            // find first cycle
-            var cycle = FindCycle(0);
-            if (cycle == null) return false;
-
-            // continue while cycle length is less than total number of edges
-            while (true)
-            {
-                var cycleExtended = false;
-                for (int i = 0; i < cycle.Count; i++)
-                {
-                    if (graph[cycle[i]].AllOutgoingVisited) continue;
-                    for (int j = 0; j < graph[cycle[i]].OutgoingEdges.Count; j++)
-                    {
-                        if (!graph[cycle[i]].OutgoingEdges[j].Visited)
-                        {
-                            cycleExtended = true;
-                            // unvisited edge found
-                            var newCycle = cycle.Take(i).ToList();
-                            // insert new cycle in the middle of the old one and check for unvisited edges again
-                            var nextCycle = FindCycle(cycle[i]);
-                            if (nextCycle == null) return false;
-                            newCycle.AddRange(nextCycle);
-                            newCycle.AddRange(cycle.Skip(i).Take(cycle.Count - i));
-                            cycle = newCycle;
-                            break;
-                        }
-                    }
-                }
-                if (!cycleExtended) return cycle.Count == edgeCount;
+                if (graph[i].Deleted) continue;
+                vertexCount++;
+                var incoming = graph[i].IncomingEdges.Count(x => !x.Visited);
+                var outgoing = graph[i].OutgoingEdges.Count(x => !x.Visited);
+                if (incoming == 0 || outgoing == 0 || incoming != outgoing)
+                    return false;
             }
+            return vertexCount > 0;
         }
 
         public static string Solve(string[] input)
         {
-            for (int k = input[0].Length; k >= 1; k--)
-            {
-                var kmers = GetKMers(input.Skip(1).ToArray(), k).ToArray();
-                var edges = ConstructGraph(kmers);
-                var tips = RemoveTips();
-                // check if eulerian graph exists
-                if (Exists(edges - tips))
-                    return tips.ToString();
-            }
+            var kmers = GetKMers(input.Skip(1).ToArray(), input.Length >= 15 ? 15 : 3).ToArray();
+            ConstructGraph(kmers);
+            var tips = RemoveTips();
+            // check if eulerian graph is possible
+            if (EulerianGraphExists())
+                return tips.ToString();
             return "0";
         }
 

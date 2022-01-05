@@ -22,6 +22,8 @@ namespace _1_circulation
     public class Node
     {
         public bool Visited;
+        public int InLb;
+        public int OutLb;
         public int Balance;
         public TwoWayEdge PathBack;
         public List<TwoWayEdge> Edges = new List<TwoWayEdge>();
@@ -39,7 +41,7 @@ namespace _1_circulation
         {
             //breadth-first search
             var queue = new Queue<int>();
-            queue.Enqueue(1);
+            queue.Enqueue(0);
             Path result = null;
             var touched = new List<int>();
             while (queue.Count > 0)
@@ -50,7 +52,7 @@ namespace _1_circulation
                     // reconstruct path if sink was found
                     var pathEdges = new Stack<TwoWayEdge>();
                     var minCapacity = int.MaxValue;
-                    while (i > 1)
+                    while (i > 0)
                     {
                         pathEdges.Push(residual[i].PathBack);
                         if (residual[i].PathBack.EdgeF.Flow < minCapacity) minCapacity = residual[i].PathBack.EdgeF.Flow;
@@ -89,20 +91,39 @@ namespace _1_circulation
         {
             var n = int.Parse(input[0].Split(' ')[0]);
             // initialization
-            var network = new Node[n + 2];
-            for (int i = 1; i <= n + 1; i++)
+            var network = new Node[n + 2]; // indexes from 1 + 2 nodes s & t
+            for (int i = 0; i < n + 2; i++)
             {
                 network[i] = new Node();
             }
-            // we split 1st node to source (s) and sink (t), so we need extra node in the end of network array
+            //sum of all lowerbounds
+            var lowerSum = 0;
 
+            // process input
             for (int j = 1; j < input.Length; j++)
             {
                 var edge = input[j].Split(' ').Select(x => int.Parse(x)).ToArray();
-                if (edge[1] == 1) edge[1] = n + 1; // if edge is going to s, redirect it to t
-                var edgeF = new Edge() { Destination = edge[1], Source = edge[0], Flow = edge[3], Lowerbound = edge[2], Index = j };
+                lowerSum += edge[2];
+                var edgeF = new Edge() { Destination = edge[1], Source = edge[0], Flow = edge[3] - edge[2], Lowerbound = edge[2], Index = j };
                 var edgeR = new Edge() { Destination = edge[0], Source = edge[1], Flow = 0, Lowerbound = edge[2], Index = j };
                 network[edge[0]].Edges.Add(new TwoWayEdge() { EdgeF = edgeF, EdgeR = edgeR });
+                network[edge[0]].OutLb += edge[2];
+                network[edge[1]].InLb += edge[2];
+            }
+
+            // add s & t 
+            for (int k = 1; k < network.Length - 1; k++)
+            {
+                network[0].Edges.Add(new TwoWayEdge()
+                {
+                    EdgeF = new Edge() { Destination = k, Source = 0, Flow = network[k].InLb, Lowerbound = 0, Index = 0 },
+                    EdgeR = new Edge() { Destination = 0, Source = k, Flow = 0, Lowerbound = 0, Index = 0 }
+                });
+                network[k].Edges.Add(new TwoWayEdge()
+                {
+                    EdgeF = new Edge() { Destination = network.Length - 1, Source = k, Flow = network[k].OutLb, Lowerbound = 0, Index = 0 },
+                    EdgeR = new Edge() { Destination = k, Source = network.Length - 1, Flow = 0, Lowerbound = 0, Index = 0 }
+                });
             }
 
             // Edmonds-Karp algorithm
@@ -121,21 +142,18 @@ namespace _1_circulation
                 flow += path.MinCapacity;
             }
 
-            // check if incoming flow equals outgoing flow for splitted first node
-            if (network[1].Balance + network[network.Length - 1].Balance != 0)
-                return new string[] { "NO" };
+            // if maxflow is not equal to sum of lowerbounds, there's no solution
+            if (flow != lowerSum) return new string[] { "NO" };
 
-            // check that resulting flow satisfies given lowerbounds and every node conserves flow
+            // output result using edges' indices
             var result = new string[input.Length];
             result[0] = "YES";
             for (int i = 1; i < network.Length - 1; i++)
             {
-                if (i > 1 && network[i].Balance != 0) return new string[] { "NO" };
                 for (int j = 0; j < network[i].Edges.Count; j++)
                 {
-                    if (network[i].Edges[j].EdgeR.Flow < network[i].Edges[j].EdgeR.Lowerbound)
-                        return new string[] { "NO" };
-                    result[network[i].Edges[j].EdgeR.Index] = network[i].Edges[j].EdgeR.Flow.ToString();
+                    if (network[i].Edges[j].EdgeR.Index == 0) continue;
+                    result[network[i].Edges[j].EdgeR.Index] = (network[i].Edges[j].EdgeR.Flow + network[i].Edges[j].EdgeR.Lowerbound).ToString();
                 }
             }
             return result;
