@@ -41,21 +41,21 @@ namespace _4_tip_removal
     public class Graph
     {
         private readonly List<string> mers = new List<string>();
-        private readonly Dictionary<string, Vertex> vertices = new Dictionary<string, Vertex>();
+        public readonly Dictionary<string, Vertex> Vertices = new Dictionary<string, Vertex>();
         public int VertexCount
         {
-            get { return vertices.Keys.Count; }
+            get { return Vertices.Keys.Count; }
         }
 
         public Vertex this[int index]
         {
             get
             {
-                return vertices[mers[index]];
+                return Vertices[mers[index]];
             }
             set
             {
-                vertices[mers[index]] = value;
+                Vertices[mers[index]] = value;
             }
         }
 
@@ -66,11 +66,11 @@ namespace _4_tip_removal
             {
                 vertex = new Vertex(mers.Count);
                 mers.Add(mer);
-                vertices.Add(mer, vertex);
+                Vertices.Add(mer, vertex);
             }
             else
             {
-                vertex = vertices[mer];
+                vertex = Vertices[mer];
             }
             return vertex.Index;
         }
@@ -92,48 +92,6 @@ namespace _4_tip_removal
             return kmers;
         }
 
-        private static int RemoveSourceTip(int v)
-        {
-            var tipNum = 0;
-            if (graph[v].IncomingEdges.Count < 2)
-            {
-                graph[v].Deleted = true;
-                for (int j = 0; j < graph[v].OutgoingEdges.Count; j++)
-                {
-                    if (graph[v].OutgoingEdges[j].Visited) continue;
-                    tipNum += RemoveSourceTip(graph[v].OutgoingEdges[j].Connection) + 1;
-                    graph[v].OutgoingEdges[j].Visited = true;
-                    for (int k = 0; k < graph[graph[v].OutgoingEdges[j].Connection].IncomingEdges.Count; k++)
-                    {
-                        if (graph[graph[v].OutgoingEdges[j].Connection].IncomingEdges[k].Connection == v)
-                            graph[graph[v].OutgoingEdges[j].Connection].IncomingEdges[k].Visited = true;
-                    }
-                }
-            }
-            return tipNum;
-        }
-
-        private static int RemoveTargetTip(int v)
-        {
-            var tipNum = 0;
-            if (graph[v].OutgoingEdges.Count < 2)
-            {
-                graph[v].Deleted = true;
-                for (int j = 0; j < graph[v].IncomingEdges.Count; j++)
-                {
-                    if (graph[v].IncomingEdges[j].Visited) continue;
-                    tipNum += RemoveTargetTip(graph[v].IncomingEdges[j].Connection) + 1;
-                    graph[v].IncomingEdges[j].Visited = true;
-                    for (int k = 0; k < graph[graph[v].IncomingEdges[j].Connection].OutgoingEdges.Count; k++)
-                    {
-                        if (graph[graph[v].IncomingEdges[j].Connection].OutgoingEdges[k].Connection == v)
-                            graph[graph[v].IncomingEdges[j].Connection].OutgoingEdges[k].Visited = true;
-                    }
-                }
-            }
-            return tipNum;
-        }
-
         private static void ConstructGraph(string[] kmers)
         {
             graph = new Graph();
@@ -153,45 +111,44 @@ namespace _4_tip_removal
             var tipCount = 0;
             for (int i = 0; i < graph.VertexCount; i++)
             {
+                if (graph[i].Deleted) continue;
                 if (graph[i].IncomingEdges.Count == 0)
                 {
                     // source tip
-                    tipCount += RemoveSourceTip(i);
+                    tipCount += graph[i].OutgoingEdges.Count;
+                    for (int j = 0; j < graph[i].OutgoingEdges.Count; j++)
+                    {
+                        graph[graph[i].OutgoingEdges[j].Connection].IncomingEdges.RemoveAll(x => x.Connection == i);
+                    }
+                    graph[i].Deleted = true;
                 }
                 if (graph[i].OutgoingEdges.Count == 0)
                 {
                     // target tip
-                    tipCount += RemoveTargetTip(i);
+                    tipCount += graph[i].IncomingEdges.Count;
+                    for (int j = 0; j < graph[i].IncomingEdges.Count; j++)
+                    {
+                        graph[graph[i].IncomingEdges[j].Connection].OutgoingEdges.RemoveAll(x => x.Connection == i);
+                    }
+                    graph[i].Deleted = true;
                 }
             }
 
             return tipCount;
         }
 
-        private static bool EulerianGraphExists()
-        {
-            var vertexCount = 0;
-            for (int i = 0; i < graph.VertexCount; i++)
-            {
-                if (graph[i].Deleted) continue;
-                vertexCount++;
-                var incoming = graph[i].IncomingEdges.Count(x => !x.Visited);
-                var outgoing = graph[i].OutgoingEdges.Count(x => !x.Visited);
-                if (incoming == 0 || outgoing == 0 || incoming != outgoing)
-                    return false;
-            }
-            return vertexCount > 0;
-        }
-
         public static string Solve(string[] input)
         {
             var kmers = GetKMers(input.Skip(1).ToArray(), input.Length >= 15 ? 15 : 3).ToArray();
             ConstructGraph(kmers);
-            var tips = RemoveTips();
-            // check if eulerian graph is possible
-            if (EulerianGraphExists())
-                return tips.ToString();
-            return "0";
+            var removedTips = 0;
+            int tips;
+            do
+            {
+                tips = RemoveTips();
+                removedTips += tips;
+            } while (tips > 0);
+            return removedTips.ToString();
         }
 
         static void Main(string[] args)
