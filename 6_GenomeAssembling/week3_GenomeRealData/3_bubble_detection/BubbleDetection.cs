@@ -7,49 +7,51 @@ namespace _3_bubble_detection
     public class Vertex
     {
         public int Index;
-        public List<Edge> Edges = new List<Edge>();
-        public int VisitedCount;
-        public bool AllVisited
-        {
-            get
-            {
-                return VisitedCount == Edges.Count;
-            }
-        }
+        public List<Edge> IncomingEdges = new List<Edge>();
+        public List<Edge> OutgoingEdges = new List<Edge>();
         public Vertex(int index)
         {
             Index = index;
         }
-        public void AddEdge(int destination)
+        public void AddIncomingEdge(int destination)
         {
-            Edges.Add(new Edge(destination));
+            IncomingEdges.Add(new Edge(destination));
+        }
+        public void AddOutgoingEdge(int destination)
+        {
+            OutgoingEdges.Add(new Edge(destination));
         }
     }
 
     public class Edge
     {
-        public int Destination;
-        public bool Visited;
-        public Edge(int destination)
+        public int Connection;
+        //public bool Visited;
+        public Edge(int connection)
         {
-            Destination = destination;
+            Connection = connection;
         }
     }
 
     public class Graph
     {
         private readonly List<string> mers = new List<string>();
-        private readonly Dictionary<string, Vertex> vertices = new Dictionary<string, Vertex>();
+        public Dictionary<string, Vertex> Vertices = new Dictionary<string, Vertex>();
         public Vertex this[int index]
         {
             get
             {
-                return vertices[mers[index]];
+                return Vertices[mers[index]];
             }
             set
             {
-                vertices[mers[index]] = value;
+                Vertices[mers[index]] = value;
             }
+        }
+
+        public int VertexCount
+        {
+            get { return Vertices.Count; }
         }
 
         public int Vertex(string mer)
@@ -59,11 +61,11 @@ namespace _3_bubble_detection
             {
                 vertex = new Vertex(mers.Count);
                 mers.Add(mer);
-                vertices.Add(mer, vertex);
+                Vertices.Add(mer, vertex);
             }
             else
             {
-                vertex = vertices[mer];
+                vertex = Vertices[mer];
             }
             return vertex.Index;
         }
@@ -71,7 +73,7 @@ namespace _3_bubble_detection
 
     public static class BubbleDetection
     {
-        private static Graph graph;
+        //private static Graph graph;
         private static HashSet<string> GetKMers(string[] reads, int k)
         {
             var kmers = new HashSet<string>();
@@ -85,83 +87,75 @@ namespace _3_bubble_detection
             return kmers;
         }
 
-        private static bool FindCycle(int start, out List<int> cycle)
+        private static void DFS(Vertex[] graph, int start, int[] targets, int v, int maxdepth, List<int> path, Dictionary<Tuple<int, int>, List<List<int>>> bubbleCandidates)
         {
-            var v = start;
-            cycle = new List<int>() { start };
-            do
+            if (v != start && targets.Contains(v))
             {
-                // continue to go through unvisited edges until we come back to start
-                var edgeFound = false;
-                for (int e = 0; e < graph[v].Edges.Count; e++)
+                // vertex with multiple incoming edges reached
+                var tuple = new Tuple<int, int>(start, v);
+                if (bubbleCandidates.ContainsKey(tuple))
+                    bubbleCandidates[tuple].Add(path);
+                else
+                    bubbleCandidates.Add(tuple, new List<List<int>>() { path });
+            }
+            if (path.Count > maxdepth) return;
+            foreach (var e in graph[v].OutgoingEdges)
+            {
+                var newPath = new List<int>(path)
                 {
-                    if (!graph[v].Edges[e].Visited)
-                    {
-                        graph[v].Edges[e].Visited = true;
-                        graph[v].VisitedCount++;
-                        v = graph[v].Edges[e].Destination;
-                        if (v != start)
-                            cycle.Add(v);
-                        edgeFound = true;
-                        break;
-                    }
-                }
-                if (!edgeFound) return false;
-            } while (v != start);
-            return true;
+                    e.Connection
+                };
+                DFS(graph, start, targets, e.Connection, maxdepth, newPath, bubbleCandidates);
+            }
         }
 
-        public static int CountBubbles(string[] kmers, int t)
+        private static int FindBubbles(string[] kmers, int t)
         {
-            graph = new Graph();
+            var graph = new Graph();
 
             // construct De Bruijn graph
-            var edgeCount = 0;
             for (int i = 0; i < kmers.Length; i++)
             {
                 var from = graph.Vertex(kmers[i].Substring(0, kmers[i].Length - 1));
                 var to = graph.Vertex(kmers[i].Substring(1, kmers[i].Length - 1));
-                graph[from].AddEdge(to);
-                edgeCount++;
+                graph[from].AddOutgoingEdge(to);
+                graph[to].AddIncomingEdge(from);
             }
 
-            var bubbleCount = 0;
-            // find first cycle
-            List<int> cycle;
-            if (!FindCycle(0, out cycle)) return bubbleCount;
-
-            // continue while cycle length is less than total number of edges
-
-            while (cycle.Count < edgeCount)
+            var multipleIn = new List<int>();
+            var multipleOut = new List<int>();
+            for (int i = 0; i < graph.VertexCount; i++)
             {
-                var hasUnexplored = false;
-                for (int i = 0; i < cycle.Count; i++)
+                if (graph[i].IncomingEdges.Count > 1) multipleIn.Add(i);
+                if (graph[i].OutgoingEdges.Count > 1) multipleOut.Add(i);
+            }
+
+            // for each pair of mult-out & mult-in nodes find all paths between them shorter than threshold
+            var bubbleCandidates = new Dictionary<Tuple<int, int>, List<List<int>>>();
+            var vertices = graph.Vertices.Select(x => x.Value).ToArray();
+            for (int i = 0; i < multipleOut.Count; i++)
+            {
+                DFS(vertices, multipleOut[i], multipleIn.ToArray(), multipleOut[i], t, new List<int>() { multipleOut[i] }, bubbleCandidates);
+            }
+
+            // find all pairs of non-overlapping disjoint paths
+            var bubbleCount = 0;
+            foreach (var pair in bubbleCandidates.Keys.ToArray())
+            {
+                for (int i = 0; i < bubbleCandidates[pair].Count; i++)
                 {
-                    if (graph[cycle[i]].AllVisited) continue;
-                    for (int j = 0; j < graph[cycle[i]].Edges.Count; j++)
+                    for (int j = i + 1; j < bubbleCandidates[pair].Count; j++)
                     {
-                        if (!graph[cycle[i]].Edges[j].Visited)
+                        var path1 = bubbleCandidates[pair][i];
+                        var path2 = bubbleCandidates[pair][j];
+                        if (path1.GroupBy(x => x).Count() < path1.Count) continue;
+                        if (path2.GroupBy(x => x).Count() < path2.Count) continue;
+                        if (!path1.Skip(1).Take(bubbleCandidates[pair][i].Count - 2).Intersect(path2.Skip(1).Take(bubbleCandidates[pair][j].Count - 2)).Any())
                         {
-                            // unvisited edge found
-                            hasUnexplored = true;
-                            List<int> nextCycle;
-                            if (FindCycle(cycle[i], out nextCycle))
-                            {
-                                // insert new cycle in the middle of the old one and check for unvisited edges again
-                                var newCycle = cycle.Take(i).ToList();
-                                newCycle.AddRange(nextCycle);
-                                newCycle.AddRange(cycle.Skip(i).Take(cycle.Count - i));
-                                cycle = newCycle;
-                            }
-                            else if (nextCycle.Count - 1 <= t)
-                            {
-                                bubbleCount++;
-                            }
-                            break;
+                            bubbleCount++;
                         }
                     }
                 }
-                if (!hasUnexplored) break;
             }
             return bubbleCount;
         }
@@ -170,7 +164,7 @@ namespace _3_bubble_detection
         {
             var kt = input[0].Split(' ').Select(x => int.Parse(x)).ToArray();
             var kmers = GetKMers(input.Skip(1).ToArray(), kt[0]).ToArray();
-            var bubbles = CountBubbles(kmers, kt[1]);
+            var bubbles = FindBubbles(kmers, kt[1]);
             return bubbles.ToString();
         }
 
