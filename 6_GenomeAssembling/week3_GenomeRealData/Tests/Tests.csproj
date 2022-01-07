@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
+    <PackageReference Include="xunit" Version="2.4.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
+    <PackageReference Include="coverlet.collector" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\2_optimal_kmer_size\2_optimal_kmer_size.csproj" />
+    <ProjectReference Include="..\3_bubble_detection\3_bubble_detection.csproj" />
+    <ProjectReference Include="..\1_circulation\1_circulation.csproj" />
+    <ProjectReference Include="..\4_tip_removal\4_tip_removal.csproj" />
+    <ProjectReference Include="..\6_assembler\6_assembler.csproj" />
+    <ProjectReference Include="..\5_phi174_error_prone\5_phi174_error_prone.csproj" />
+  </ItemGroup>
+
+</Project>
