@@ -26,7 +26,7 @@ namespace _3_bubble_detection
     public class Edge
     {
         public int Connection;
-        public bool Visited;
+        //public bool Visited;
         public Edge(int connection)
         {
             Connection = connection;
@@ -87,41 +87,25 @@ namespace _3_bubble_detection
             return kmers;
         }
 
-        private static void DFS(Vertex[] graph, int start, int[] targets, int v, int depth, int maxdepth, List<int> path, Dictionary<Tuple<int, int>, List<List<int>>> bubbleCandidates)
+        private static void DFS(Vertex[] graph, int start, int[] targets, int v, int maxdepth, List<int> path, Dictionary<Tuple<int, int>, List<List<int>>> bubbleCandidates)
         {
             if (v != start && targets.Contains(v))
             {
                 // vertex with multiple incoming edges reached
                 var tuple = new Tuple<int, int>(start, v);
                 if (bubbleCandidates.ContainsKey(tuple))
-                {
-                    var overlapping = false;
-                    for (int i = 0; i < bubbleCandidates[tuple].Count; i++)
-                    {
-                        if (bubbleCandidates[tuple][i].Skip(1).Take(bubbleCandidates[tuple][i].Count - 2).Intersect(path).ToArray().Length > 0)
-                        {
-                            overlapping = true;
-                            break;
-                        }
-                    }
-                    if (!overlapping)
-                        bubbleCandidates[tuple].Add(path);
-                }
+                    bubbleCandidates[tuple].Add(path);
                 else
-                {
                     bubbleCandidates.Add(tuple, new List<List<int>>() { path });
-                }
             }
-            if (depth >= maxdepth) return;
+            if (path.Count > maxdepth) return;
             foreach (var e in graph[v].OutgoingEdges)
             {
-                if (e.Visited) continue;
-                e.Visited = true;
                 var newPath = new List<int>(path)
                 {
                     e.Connection
                 };
-                DFS(graph, start, targets, e.Connection, depth + 1, maxdepth, newPath, bubbleCandidates);
+                DFS(graph, start, targets, e.Connection, maxdepth, newPath, bubbleCandidates);
             }
         }
 
@@ -146,21 +130,34 @@ namespace _3_bubble_detection
                 if (graph[i].OutgoingEdges.Count > 1) multipleOut.Add(i);
             }
 
+            // for each pair of mult-out & mult-in nodes find all paths between them shorter than threshold
             var bubbleCandidates = new Dictionary<Tuple<int, int>, List<List<int>>>();
             var vertices = graph.Vertices.Select(x => x.Value).ToArray();
             for (int i = 0; i < multipleOut.Count; i++)
             {
-                DFS(vertices, multipleOut[i], multipleIn.ToArray(), multipleOut[i], 0, t, new List<int>() { multipleOut[i] }, bubbleCandidates);
-                foreach (var vertex in vertices)
+                DFS(vertices, multipleOut[i], multipleIn.ToArray(), multipleOut[i], t, new List<int>() { multipleOut[i] }, bubbleCandidates);
+            }
+
+            // find all pairs of non-overlapping disjoint paths
+            var bubbleCount = 0;
+            foreach (var pair in bubbleCandidates.Keys.ToArray())
+            {
+                for (int i = 0; i < bubbleCandidates[pair].Count; i++)
                 {
-                    foreach (var edge in vertex.OutgoingEdges)
+                    for (int j = i + 1; j < bubbleCandidates[pair].Count; j++)
                     {
-                        edge.Visited = false;
+                        var path1 = bubbleCandidates[pair][i];
+                        var path2 = bubbleCandidates[pair][j];
+                        if (path1.GroupBy(x => x).Count() < path1.Count) continue;
+                        if (path2.GroupBy(x => x).Count() < path2.Count) continue;
+                        if (!path1.Skip(1).Take(bubbleCandidates[pair][i].Count - 2).Intersect(path2.Skip(1).Take(bubbleCandidates[pair][j].Count - 2)).Any())
+                        {
+                            bubbleCount++;
+                        }
                     }
                 }
             }
-
-            return bubbleCandidates.Count(x => x.Value.Count > 1);
+            return bubbleCount;
         }
 
         public static string Solve(string[] input)

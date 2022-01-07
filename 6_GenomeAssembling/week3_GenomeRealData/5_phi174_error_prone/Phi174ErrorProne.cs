@@ -133,6 +133,7 @@ namespace _5_phi174_error_prone
                             graph[graph[i].OutgoingEdges[j].Connection].IncomingEdges.RemoveAll(x => x.Connection == i);
                         }
                         graph[i].Deleted = true;
+                        i = -1;
                     }
                     if (graph[i].OutgoingEdges.Count == 0)
                     {
@@ -143,6 +144,7 @@ namespace _5_phi174_error_prone
                             graph[graph[i].IncomingEdges[j].Connection].OutgoingEdges.RemoveAll(x => x.Connection == i);
                         }
                         graph[i].Deleted = true;
+                        i = -1;
                     }
                 }
             } while (tipCount > 0);
@@ -174,7 +176,7 @@ namespace _5_phi174_error_prone
             return true;
         }
 
-        private static void DFS(int start, int[] targets, int v, int depth, List<int> path, Dictionary<Tuple<int, int>, List<List<int>>> bubbleCandidates)
+        private static void DFS(int start, int[] targets, int v, int maxdepth, List<int> path, Dictionary<Tuple<int, int>, List<List<int>>> bubbleCandidates)
         {
             if (graph[v].Deleted) return;
             if (v != start && targets.Contains(v))
@@ -182,33 +184,18 @@ namespace _5_phi174_error_prone
                 // vertex with multiple incoming edges reached
                 var tuple = new Tuple<int, int>(start, v);
                 if (bubbleCandidates.ContainsKey(tuple))
-                {
-                    var overlapping = false;
-                    for (int i = 0; i < bubbleCandidates[tuple].Count; i++)
-                    {
-                        if (bubbleCandidates[tuple][i].Skip(1).Take(bubbleCandidates[tuple][i].Count - 2).Intersect(path).ToArray().Length > 0)
-                        {
-                            overlapping = true;
-                            break;
-                        }
-                    }
-                    if (!overlapping)
-                        bubbleCandidates[tuple].Add(path);
-                }
+                    bubbleCandidates[tuple].Add(path);
                 else
-                {
                     bubbleCandidates.Add(tuple, new List<List<int>>() { path });
-                }
             }
+            if (path.Count > maxdepth) return;
             foreach (var e in graph[v].OutgoingEdges)
             {
-                if (e.Visited) continue;
-                e.Visited = true;
                 var newPath = new List<int>(path)
                 {
                     e.Connection
                 };
-                DFS(start, targets, e.Connection, depth + 1, newPath, bubbleCandidates);
+                DFS(start, targets, e.Connection, maxdepth, newPath, bubbleCandidates);
             }
         }
 
@@ -218,34 +205,42 @@ namespace _5_phi174_error_prone
             var multipleOut = new List<int>();
             for (int i = 0; i < graph.VertexCount; i++)
             {
-                if (!graph[i].Deleted && graph[i].IncomingEdges.Count > 1) multipleIn.Add(i);
-                if (!graph[i].Deleted && graph[i].OutgoingEdges.Count > 1) multipleOut.Add(i);
+                if (graph[i].IncomingEdges.Count > 1) multipleIn.Add(i);
+                if (graph[i].OutgoingEdges.Count > 1) multipleOut.Add(i);
             }
 
+            // for each pair of mult-out & mult-in nodes find all paths between them shorter than threshold
             var bubbleCandidates = new Dictionary<Tuple<int, int>, List<List<int>>>();
             var vertices = graph.Vertices.Select(x => x.Value).ToArray();
             for (int i = 0; i < multipleOut.Count; i++)
             {
-                DFS(multipleOut[i], multipleIn.ToArray(), multipleOut[i], 0, new List<int>() { multipleOut[i] }, bubbleCandidates);
-                foreach (var vertex in vertices)
-                {
-                    foreach (var edge in vertex.OutgoingEdges)
-                    {
-                        edge.Visited = false;
-                    }
-                }
+                DFS(multipleOut[i], multipleIn.ToArray(), multipleOut[i], kmers[0].Length, new List<int>() { multipleOut[i] }, bubbleCandidates);
             }
-            foreach (var bubble in bubbleCandidates.Where(x => x.Value.Count > 1))
+
+            // find all pairs of non-overlapping disjoint paths
+            foreach (var pair in bubbleCandidates.Keys.ToArray())
             {
-                foreach (var bubblePath in bubble.Value.OrderByDescending(x => x.Count).Skip(1))
+                for (int i = 0; i < bubbleCandidates[pair].Count; i++)
                 {
-                    for (int i = 1; i < bubblePath.Count - 1; i++)
+                    for (int j = i + 1; j < bubbleCandidates[pair].Count; j++)
                     {
-                        for (int j = 0; j < graph[bubblePath[i]].OutgoingEdges.Count; j++)
+                        var path1 = bubbleCandidates[pair][i];
+                        var path2 = bubbleCandidates[pair][j];
+                        if (path1.GroupBy(x => x).Count() < path1.Count) continue;
+                        if (path2.GroupBy(x => x).Count() < path2.Count) continue;
+                        if (!path1.Skip(1).Take(bubbleCandidates[pair][i].Count - 2).Intersect(path2.Skip(1).Take(bubbleCandidates[pair][j].Count - 2)).Any())
                         {
-                            graph[graph[bubblePath[i]].OutgoingEdges[j].Connection].IncomingEdges.RemoveAll(x => x.Connection == i);
+                            var path = path2.Count > path1.Count ? path1 : path2;
+                            for (int k = 1; k < path.Count - 1; k++)
+                            {
+                                if (graph[path[k]].Deleted) continue;
+                                for (int l = 0; l < graph[path[k]].OutgoingEdges.Count; l++)
+                                {
+                                    graph[graph[path[k]].OutgoingEdges[l].Connection].IncomingEdges.RemoveAll(x => x.Connection == k);
+                                }
+                                graph[path[k]].Deleted = true;
+                            }
                         }
-                        graph[bubblePath[i]].Deleted = true;
                     }
                 }
             }
@@ -290,7 +285,7 @@ namespace _5_phi174_error_prone
 
         public static string Assemble(string[] reads)
         {
-            var kmers = GetKMers(reads, reads[0].Length > 15 ? 15 : 3).ToArray();
+            var kmers = GetKMers(reads, reads[0].Length < 5 ? 3 : 19).ToArray();
             ConstructGraph(kmers);
             RemoveTips();
             HandleBubbles(kmers);

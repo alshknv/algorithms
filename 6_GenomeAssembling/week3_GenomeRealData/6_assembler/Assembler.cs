@@ -7,7 +7,7 @@ namespace _6_assembler
     {
         public static string[] Assemble(string[] data)
         {
-            return new string[1];
+            throw new NotImplementedException();
         }
 
         static void Main(string[] args)

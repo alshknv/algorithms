@@ -144,6 +144,14 @@ namespace _1_circulation
 
             // if maxflow is not equal to sum of lowerbounds, there's no solution
             if (flow != lowerSum) return new string[] { "NO" };
+            for (int i = 1; i < network.Length - 1; i++)
+            {
+                if (network[i].Balance != 0) return new string[] { "NO" };
+                for (int j = 0; j < network[i].Edges.Count; j++)
+                {
+                    if (network[j].Edges[j].EdgeR.Flow < network[j].Edges[j].EdgeR.Lowerbound) return new string[] { "NO" };
+                }
+            }
 
             // output result using edges' indices
             var result = new string[input.Length];
